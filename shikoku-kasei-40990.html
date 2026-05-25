@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OSINT レポート — 40990</title>
+<style>
+
+:root {
+  --bg: #fafaf7;
+  --panel: #ffffff;
+  --ink: #1a1a1a;
+  --ink-soft: #4a4a4a;
+  --ink-mute: #8a8a8a;
+  --accent: #2563eb;
+  --accent-soft: #dbeafe;
+  --rule: #e5e5e0;
+  --code-bg: #f3f3ee;
+  --clean: #16a34a;
+  --minor: #d97706;
+  --major: #dc2626;
+  --neutral: #6b7280;
+  --challenge-bg: #fef9e7;
+  --challenge-border: #d97706;
+  --max-width: 820px;
+}
+
+* { box-sizing: border-box; }
+html { font-size: 16px; -webkit-text-size-adjust: 100%; }
+body {
+  font-family: "Noto Sans JP", "Yu Gothic", "Hiragino Sans", "Hiragino Kaku Gothic ProN",
+               -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+  margin: 0;
+  padding: 0;
+  line-height: 1.85;
+  font-feature-settings: "palt";
+}
+
+main {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: 48px 32px 96px;
+  background: var(--panel);
+  min-height: 100vh;
+  box-shadow: 0 0 40px rgba(0,0,0,0.04);
+}
+
+h1 {
+  font-size: 2.1rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  margin: 0 0 8px 0;
+  padding-bottom: 12px;
+  border-bottom: 3px solid var(--ink);
+}
+
+h2 {
+  font-size: 1.4rem;
+  font-weight: 700;
+  margin: 48px 0 16px 0;
+  padding-left: 14px;
+  border-left: 5px solid var(--accent);
+  letter-spacing: 0.02em;
+}
+
+h3 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin: 28px 0 12px 0;
+  color: var(--ink);
+}
+
+p { margin: 12px 0; }
+
+a {
+  color: var(--accent);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: border-color 0.15s;
+}
+a:hover { border-bottom-color: var(--accent); }
+
+ul, ol {
+  padding-left: 1.6em;
+  margin: 12px 0;
+}
+li { margin: 6px 0; }
+li > ul, li > ol { margin: 4px 0; }
+
+/* Meta header (1st emphasis line) */
+h1 + p > em:first-child,
+h1 + p em:first-child {
+  display: inline-block;
+  color: var(--ink-mute);
+  font-style: normal;
+  font-size: 0.9rem;
+  letter-spacing: 0.02em;
+}
+
+em {
+  color: var(--ink-soft);
+  font-style: normal;
+}
+
+strong { font-weight: 700; }
+
+code {
+  background: var(--code-bg);
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 0.9em;
+  font-family: "JetBrains Mono", "Cascadia Code", Consolas, monospace;
+}
+
+pre {
+  background: var(--code-bg);
+  padding: 16px;
+  border-radius: 6px;
+  overflow-x: auto;
+}
+pre > code {
+  background: none;
+  padding: 0;
+}
+
+blockquote {
+  margin: 16px 0;
+  padding: 12px 18px;
+  border-left: 4px solid var(--accent-soft);
+  background: rgba(219, 234, 254, 0.3);
+  color: var(--ink-soft);
+}
+
+hr {
+  border: none;
+  height: 1px;
+  background: var(--rule);
+  margin: 40px 0;
+}
+
+/* Verdict badges */
+.verdict-badge, .check-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  vertical-align: middle;
+}
+.verdict-clean,  .check-clean  { background: #dcfce7; color: var(--clean); }
+.verdict-minor,  .check-minor  { background: #fef3c7; color: var(--minor); }
+.verdict-major,  .check-major  { background: #fee2e2; color: var(--major); }
+.verdict-neutral               { background: #f3f4f6; color: var(--neutral); }
+
+/* Quality score badges (Phase 3.5 D-step) */
+.quality-badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-weight: 600;
+  font-size: 0.92rem;
+  margin-left: 6px;
+  vertical-align: middle;
+  letter-spacing: 0.02em;
+}
+.quality-high    { background: #d1fae5; color: #065f46; border: 1px solid #16a34a; }
+.quality-medium  { background: #fef3c7; color: #92400e; border: 1px solid #d97706; }
+.quality-low     { background: #fee2e2; color: #991b1b; border: 1px solid #dc2626; }
+.quality-neutral { background: #f1f5f9; color: #475569; border: 1px solid #94a3b8; }
+.badge-icon {
+  display: inline-block;
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  background: currentColor;
+  color: white;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 16px;
+  text-align: center;
+}
+
+/* Open Challenges section (h2 directly followed by paragraph + ol) */
+h2:has(+ em),
+h2:has(+ p > em:only-child) {
+  margin-top: 36px;
+}
+
+/* Highlight 「反論者の未決着論点」「Open Challenges」section */
+h2 + p > em:only-child {
+  display: block;
+  background: var(--challenge-bg);
+  border-left: 4px solid var(--challenge-border);
+  padding: 12px 16px;
+  border-radius: 0 4px 4px 0;
+  margin: 16px 0 20px 0;
+  font-style: normal;
+  color: var(--ink);
+}
+
+/* Source list (collector name in code) */
+ul li code {
+  font-size: 0.82em;
+}
+
+/* Print styling (PDF export friendly) */
+@media print {
+  body { background: white; }
+  main { box-shadow: none; max-width: none; padding: 24px; }
+  h1 { page-break-before: avoid; }
+  h2 { page-break-after: avoid; }
+  a { color: var(--ink); }
+  .verdict-badge, .check-badge, .quality-badge { border: 1px solid currentColor; }
+}
+
+/* Header note (sub-meta after title) */
+main > p:nth-of-type(1) {
+  font-size: 0.9rem;
+  color: var(--ink-mute);
+  margin-bottom: 4px;
+}
+main > p:nth-of-type(2) {
+  font-size: 0.88rem;
+  color: var(--ink-soft);
+  background: #f7f7f1;
+  padding: 12px 16px;
+  border-radius: 6px;
+  border-left: 3px solid var(--neutral);
+}
+
+/* Footer mini-credit (auto-injected) */
+.osint-footer {
+  margin-top: 64px;
+  padding-top: 20px;
+  border-top: 1px solid var(--rule);
+  color: var(--ink-mute);
+  font-size: 0.78rem;
+  text-align: center;
+}
+
+</style>
+</head>
+<body>
+<main>
+<h1 id="osint-40990">OSINT レポート: 40990</h1>
+<p><em>ドメイン: <code>financial</code> · 生成日時: 2026-05-25T01:24:57.156993+00:00 · 独立レビューの判定: <span class="verdict-badge verdict-minor"><span class="badge-icon">△</span>軽微な懸念あり</span> · 品質スコア: <span class="quality-badge quality-medium">品質 53/100 (中)</span></em></p>
+<p><em>独立レビューの判定の読み方: <strong>問題なし</strong> = 未決着の指摘なし。<strong>軽微な懸念あり</strong> = 1〜3 件の小〜中程度の指摘あり、注意書きを添えれば使える。<strong>重要な懸念あり</strong> = 主要な主張のうち少なくとも 1 件が単一ソース依存・利害相反・反証情報あり等で、利用前の確認が必要。</em></p>
+<p><em>品質スコアの読み方: 8 指標 (独立レビュー判定 / 単一ソース率 / 引用率 / 鮮度 / クロスソース性 / 訂正シグナル / 翻訳整合性 / 未決着論点数) の重み付き合計、0〜100 点。<strong>高 (80 以上)</strong> = 主要主張が複数ソースで裏付け、新鮮、訂正シグナルなし。<strong>中 (50〜79)</strong> = 一部に単一ソース依存・古さ・訂正フラグあり、判断材料として使えるが要確認。<strong>低 (50 未満)</strong> = 重要な裏付け不足、別途調査推奨。算出アルゴリズムは末尾の Quality 内訳を参照。</em></p>
+<h2 id="top-line-summary">要約 (Top-line summary)</h2>
+<p>四国化成ホールディングス株式会社 (TSE: 4099) は、2026 年 3 月に第 106 期の年次決算書 (有価証券報告書) を提出しました。同日付で臨時報告書 (重要な出来事を緊急に公表する書類) も開示されています。2025 年度の連結売上高は 707 億 500 万円 (前年比 +1.7%)、純利益は 84 億 5,900 万円で、自己資本比率は 65.0% と堅調な財務状況を示しています。5 月には年次決算書の訂正版が提出され、子会社株式数の表記ミスを修正しましたが、財務諸表への影響はありません。</p>
+<h2 id="_1">主な調査結果</h2>
+<ul>
+<li><strong>2025 年度通期決算 (連結)</strong> — 売上高 707 億 500 万円 (前年比 +1.7%)、純利益 84 億 5,900 万円、1 株当たり利益 2,168.70 円、自己資本比率 65.0%。資産の約 3 分の 2 が自己資本で賄われており、バランスシートが堅実です。</li>
+<li>詳細: 負債比率が低く、一般的な日本の中堅特殊化学品メーカーの保守的な資本構成を示しています。</li>
+<li>
+<p>出典: <code>sec_edgar</code> [EDINET 有価証券報告書 第 106 期] · <a href="https://disclosure2dl.edinet-fsa.go.jp/searchdocument/pdf/S100XSPO.pdf">https://disclosure2dl.edinet-fsa.go.jp/searchdocument/pdf/S100XSPO.pdf</a></p>
+</li>
+<li>
+<p><strong>2025 年度上期決算 (連結)</strong> — 売上高 341 億 7,200 万円 (前年同期比 −3.0%) である一方、営業利益は +8.6% 伸びて 52 億 5,300 万円、純利益は 37 億 2,900 万円 (1 株当たり利益 84.23 円)、自己資本比率は 66.8%。売上が減少しながら利益が増加した点から、原価管理の改善または製品ミックスの変化が示唆されます。</p>
+</li>
+<li>詳細: この利益率の改善が下期にも継続したかどうかは、通期営業利益データで確認が必要です。</li>
+<li>
+<p>出典: <code>sec_edgar</code> [EDINET 半期報告書] · <a href="https://disclosure2dl.edinet-fsa.go.jp/searchdocument/pdf/S100WFV9.pdf">https://disclosure2dl.edinet-fsa.go.jp/searchdocument/pdf/S100WFV9.pdf</a></p>
+</li>
+<li>
+<p><strong>臨時報告書 (2026 年 3 月 27 日提出)</strong> — 年次決算書と同日付で、重要な出来事を報告する臨時報告書が提出されました。関東財務局宛に渡邊充範会長名で署名されています。ただし、具体的に何の重要な出来事だったのかは、今回の調査で確認できた範囲では明らかになっていません。</p>
+</li>
+<li>詳細: 特定の出来事は子会社の経営方針変更、大型資産売却、重要な契約締結、株主総会の決議など、多岐にわたる可能性があります。</li>
+<li>
+<p>出典: <code>sec_edgar</code> [EDINET 臨時報告書] · <a href="https://disclosure2dl.edinet-fsa.go.jp/searchdocument/pdf/S100XUZH.pdf">https://disclosure2dl.edinet-fsa.go.jp/searchdocument/pdf/S100XUZH.pdf</a></p>
+</li>
+<li>
+<p><strong>年次決算書の訂正 (2026 年 5 月 22 日)</strong> — 訂正版の有価証券報告書が提出されました。修正内容は、企業統治に関する記載欄での子会社「ソーダニッカ株式会社」の保有株数を、12,650 株から 122,650 株に訂正したもので、単なる表記ミスと分類されています。金額ベースの財務 KPI (主要経営指標) に影響はありません。</p>
+</li>
+<li>詳細: 名目上は約 10 倍の増加に見えますが、過去年度の表記と照合すると実際は原年度データの同一性を確認する必要があります。</li>
+<li>
+<p>出典: <code>sec_edgar</code> [EDINET 訂正有価証券報告書] · <a href="https://disclosure2dl.edinet-fsa.go.jp/searchdocument/pdf/S100Y5KO.pdf、[元の報告書">https://disclosure2dl.edinet-fsa.go.jp/searchdocument/pdf/S100Y5KO.pdf、[元の報告書</a>] · <a href="https://disclosure2dl.edinet-fsa.go.jp/searchdocument/pdf/S100XSPO.pdf">https://disclosure2dl.edinet-fsa.go.jp/searchdocument/pdf/S100XSPO.pdf</a></p>
+</li>
+<li>
+<p><strong>バランスシートの堅牢性</strong> — 上期決算、通期決算のいずれでも自己資本比率が 65% を上回っており、財務レバレッジが低く、保守的な資本構成が継続しています。日本の中堅特殊化学品メーカーとして典型的な特徴です。</p>
+</li>
+<li>詳細: 複数期間で確認されており、経営方針の一貫性を示します。</li>
+<li>
+<p>出典: <code>sec_edgar</code> [EDINET KPI 推移] · <a href="https://disclosure2dl.edinet-fsa.go.jp/searchdocument/pdf/S100WFV9.pdf、https://disclosure2dl.edinet-fsa.go.jp/searchdocument/pdf/S100XSPO.pdf">https://disclosure2dl.edinet-fsa.go.jp/searchdocument/pdf/S100WFV9.pdf、https://disclosure2dl.edinet-fsa.go.jp/searchdocument/pdf/S100XSPO.pdf</a></p>
+</li>
+<li>
+<p><strong>英語メディア・ハッカーニュース報道なし</strong> — RSS フィード検索 (英日両言語) では、この会社に関する最近のニュース記事は検出されませんでした。同社は米国 ADR (アメリカン・ディポジタリー・レシート) 上場がなく、調査期間内では英語の金融メディアでも報道されていません。</p>
+</li>
+<li>詳細: これは米国市場への露出が限定的であることを示しており、日本国内の機関投資家を中心に情報交換されている可能性が高いです。</li>
+<li>出典: <code>news_rss</code> (該当記事なし)、<code>hn_search</code> (該当結果なし)</li>
+</ul>
+<h2 id="_2">深掘り余地のある論点</h2>
+<ol>
+<li>
+<p><strong>臨時報告書の具体的な内容</strong>: 2026 年 3 月 27 日付で提出された臨時報告書 (S100XUZH) の完全なテキストが、今回の調査では抽出できませんでした。子会社の経営判断、大型資産売却、重要な契約、株主総会決議など、何が「重要な出来事」であったのか確認が必要です。</p>
+</li>
+<li>
+<p><strong>2025 年度通期の営業利益</strong>: 上期では営業利益が +8.6% 伸びたことが確認されていますが、通期の営業利益は現在の調査では抽出できていません。上期の利益率改善が下期にも続いたかどうか、または逆転したかどうかを把握するには、通期データとの比較が不可欠です。</p>
+</li>
+<li>
+<p><strong>ソーダニッカ株式会社との保有株の戦略的意義</strong>: 訂正後の 122,650 株という保有数が確定しましたが、この企業が同社の取引先 (仕入先・販売先) なのか、関連会社なのか、単なる投資なのかは不明です。供給チェーン上の位置付けを理解することで、経営戦略をより深く分析できます。</p>
+</li>
+<li>
+<p><strong>アナリスト・機関投資家の動向</strong>: 大量保有報告書 (5% 超の保有者が提出する書類) やファンドの大口保有変動が、調査期間内で検出されませんでした。安定的な機関投資家基盤を示唆する可能性がありますが、定期的な監視が推奨されます。</p>
+</li>
+</ol>
+<h2 id="_3">独立レビューで残った論点</h2>
+<p><em>以下の 4 件の未決着論点が、独立レビュー者により指摘されています。これらは報告の根拠が限定的、または確認が不十分である点を示しており、本情報に依拠する前に読者が検討すべき課題です。</em></p>
+<ol>
+<li>
+<p><strong>[反証情報の欠落]</strong> 臨時報告書は年次決算書と同日付で提出されましたが、具体的な重要な出来事の内容は、現時点で確認できた範囲では明らかになっていません。
+   - 問題点: 調査者は臨時報告書の本体 PDF (S100XUZH) がデータベース上で直接入手可能であることに言及していないため、その内容が実際には取得可能であるにもかかわらず未確認のままになっています。重要な出来事の内容は本来、報告を完成させる前に抽出すべき重要事実です。
+   - 推奨フォローアップ: EDINET から S100XUZH の完全なテキストを取得し、臨時報告書の具体的な内容を特定してください。</p>
+</li>
+<li>
+<p><strong>[単一ソース依存]</strong> 上期営業利益が +8.6% で 52 億 5,300 万円に上昇した。
+   - 問題点: この数値は上期報告書 (半期報告書) にのみ基づいており、通期報告書での営業利益が未抽出のため、上期の利益率改善が下期も継続したのか、それとも反転したのかを判定できません。
+   - 推奨フォローアップ: 年次決算書 (S100XSPO または S100Y5KO) から 2025 年度通期の営業利益を抽出し、上期との比較分析を実施してください。</p>
+</li>
+<li>
+<p><strong>[因果関係の飛躍]</strong> 子会社「ソーダニッカ株式会社」の保有株数が 12,650 株から 122,650 株に訂正され、この修正は「表記ミス」で「過去年度の数値に変更なし」と説明されています。
+   - 問題点: 10 倍の増加幅 (12,650 → 122,650 株) は通常、年対比比較に表れるはずです。過去年度も同じく 122,650 株であったことを確認できなければ、実は表記ミスではなく、遡及的な訂正 (過去データの修正) である可能性があります。「財務 KPI に影響なし」という記述だけでは、これが真の表記ミスなのか実質的な訂正なのか判断できません。
+   - 推奨フォローアップ: 前会計年度 (FY2024) の企業統治報告で、ソーダニッカ株式会社の保有株数が 122,650 株であったかどうかを確認し、今回の訂正が真の表記ミスか遡及訂正かを判定してください。</p>
+</li>
+<li>
+<p><strong>[選択バイアス]</strong> 英語メディア・Hacker News でのニュース報道がないと判断されました。
+   - 問題点: 東京証券取引所上場の日本国内の中堅企業に対し、英語圏のメディアと Hacker News のみを調査対象とすることは、調査方法として不適切です。日本国内のビジネスニュース、業界誌、TSE の公式発表、企業 IR サイトなど、より適切な情報源が存在します。
+   - 推奨フォローアップ: Bloomberg Japan、Reuters Japan、日本経済新聞、企業 IR サイトの最近のニュース・プレスリリースを調査し、四国化成に関する実際のメディア・アナリストカバレッジを判定してください。</p>
+</li>
+</ol>
+<h2 id="sources">出典一覧 (Sources)</h2>
+<p><em><code>信頼度</code> は確率ではなく、<strong>情報源の種類による粗いラベル</strong>です。読み方:</em></p>
+<ul>
+<li><em><strong>0.95</strong>: 規制当局への一次公式提出書類 (SEC 8-K / 10-K 等)</em></li>
+<li><em><strong>0.90</strong>: 一次資料で構造化データを含む (Form 4 XML 等)</em></li>
+<li><em><strong>0.85</strong>: 一次資料だが直接性がやや弱い (SC 13G 等の受動的開示)</em></li>
+<li><em><strong>0.65</strong>: 二次情報源 (報道記事、SNS・フォーラム投稿)</em></li>
+<li><em><strong>それ以下</strong>: より検証が必要な情報</em></li>
+</ul>
+<p><em>「この情報源が主張をどれだけ直接的に裏付けているか」の目安としてお使いください。</em></p>
+<ul>
+<li><a href="https://disclosure2dl.edinet-fsa.go.jp/searchdocument/pdf/S100Y5KO.pdf">EDINET 有価証券報告書 訂正 — 四国化成ホールディングス株式会社 (2026-05-22)</a> — <code>edinet</code> (一次資料, 信頼度=0.95)</li>
+<li><a href="https://disclosure2dl.edinet-fsa.go.jp/searchdocument/pdf/S100XUZH.pdf">EDINET 臨時報告書 — 四国化成ホールディングス株式会社 (2026-03-27)</a> — <code>edinet</code> (一次資料, 信頼度=0.95)</li>
+<li><a href="https://disclosure2dl.edinet-fsa.go.jp/searchdocument/pdf/S100XSPO.pdf">EDINET 有価証券報告書 — 四国化成ホールディングス株式会社 (2026-03-24)</a> — <code>edinet</code> (一次資料, 信頼度=0.95)</li>
+<li><a href="https://disclosure2dl.edinet-fsa.go.jp/searchdocument/pdf/S100WFV9.pdf">EDINET PDF — 第106期中間連結会計期間（2025年1月1日〜2025年6月30日） 半期 (連結) (四国化成ホールディングス株式会社)</a> — <code>edinet_kpi_trend</code> (一次資料, 信頼度=0.92)</li>
+</ul>
+<p><em>本文中で直接引用されなかった参考情報が 10 件、調査中に収集されています (JSON 出力の <code>sources</code> フィールドに完全なリストがあります)。</em></p>
+<h2 id="_4">品質スコア内訳</h2>
+<p><strong>総合品質スコア: 53/100</strong> (中)</p>
+<table>
+<thead>
+<tr>
+<th>指標</th>
+<th>スコア</th>
+<th>重み</th>
+<th>説明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>open_challenges</td>
+<td>40/100</td>
+<td>0.15</td>
+<td>独立レビューが残した未決着論点 4 件 (少ないほど良い)。式: max(0, 100 - count*15)</td>
+</tr>
+<tr>
+<td>single_source</td>
+<td>12/100</td>
+<td>0.05</td>
+<td>1 ソースしか持たない findings の割合 87.5% (低いほど良い)。式: (1-ratio)*100</td>
+</tr>
+<tr>
+<td>adversary_concern</td>
+<td>60/100</td>
+<td>0.2</td>
+<td>独立レビュー総合判定 = minor_concerns (clean=100 / minor=60 / major=20 / unknown=50)</td>
+</tr>
+<tr>
+<td>cited_url</td>
+<td>40/100</td>
+<td>0.15</td>
+<td>draft 中で literal 引用された URL の絶対数 4 件 (10 件以上で満点、収集 14 件のうち)</td>
+</tr>
+<tr>
+<td>staleness</td>
+<td>62/100</td>
+<td>0.1</td>
+<td>最古ソースからの経過 77 日 (新しいほど良い)。式: max(0, 100 - days*0.5)</td>
+</tr>
+<tr>
+<td>diversity</td>
+<td>50/100</td>
+<td>0.2</td>
+<td>利用された collector の異種数 5/10 (多いほどクロスソース性が高い)</td>
+</tr>
+<tr>
+<td>correction_signal</td>
+<td>75/100</td>
+<td>0.1</td>
+<td>訂正報告書で検出された最大規模 = minor (none/trivial=高評価、major=要警戒)</td>
+</tr>
+<tr>
+<td>translation_check</td>
+<td>100/100</td>
+<td>0.05</td>
+<td>翻訳未実行 (英語版のみ) → 100 (penalty なし)</td>
+</tr>
+</tbody>
+</table>
+<p><em>算出アルゴリズム: 重み付き合計 (各 0-100): open_challenges<em>0.15, single_source</em>0.05, adversary_concern<em>0.2, cited_url</em>0.15, staleness<em>0.1, diversity</em>0.2, correction_signal<em>0.1, translation_check</em>0.05. band: high (&gt;= 80) / medium (50-79) / low (&lt; 50).</em></p>
+<hr>
+<h2 id="_5">翻訳チェック結果</h2>
+<p><em>本セクションは翻訳の品質を<strong>自動チェック</strong>した結果です。<strong>修正はせず</strong>、気になる箇所を flag するだけの設計です (最終判断は人)。「機械チェック」は単純な集合差分で正規表現ベース — false positive (英語の <code>January 25, 2026</code> と日本語の <code>2026 年 1 月 25 日</code> の対応取りこぼし等) を含みます。「LLM レビュアー」は Haiku 4.5 が独立に英日を読み比べた所見で、こちらも完璧ではありません。</em></p>
+<h3 id="_6">機械チェック</h3>
+<p><em>見ている対象: URL / 年号 (4 桁) / 日付 (ISO ↔ 日本語形式変換後) / 通貨表現の集合差分。<strong>「英版のみ」</strong>は原文にあって日本語訳から消えた要素、<strong>「日版のみ」</strong>は逆 (訳文側に追加された)。</em></p>
+<p><strong>判定</strong>: <span class="check-badge check-minor">△ 9 件の不一致</span> — 下記を確認してください。ただし、英語の自然言語日付 (<code>January 25, 2026</code>) と日本語形式 (<code>2026 年 1 月 25 日</code>) の対応取りこぼし等は false positive (誤検出) です。</p>
+<ul>
+<li>URL (日版のみ — 訳文に追加された): <a href="https://disclosure2dl.edinet-fsa.go.jp/searchdocument/pdf/S100WFV9.pdf、https://disclosure2dl.edinet-fsa.go.jp/searchdocument/pdf/S100XSPO.pdf,">https://disclosure2dl.edinet-fsa.go.jp/searchdocument/pdf/S100WFV9.pdf、https://disclosure2dl.edinet-fsa.go.jp/searchdocument/pdf/S100XSPO.pdf,</a> <a href="https://disclosure2dl.edinet-fsa.go.jp/searchdocument/pdf/S100Y5KO.pdf、[元の報告書">https://disclosure2dl.edinet-fsa.go.jp/searchdocument/pdf/S100Y5KO.pdf、[元の報告書</a></li>
+<li>金額表現 (英版のみ — 訳文から消えた): 2168.70, 341, 37, 52, 707, 84, 84.23</li>
+</ul>
+<h3 id="llm">LLM レビュアー所見</h3>
+<p><em>見ている対象: 数値・日付・固有名詞のずれ、重要情報の欠落、原文にない追加 (ハルシネーション)、意味の歪み、引用 URL の改変。自然な意訳や用語解説の付加は対象外。</em></p>
+<p><strong>判定</strong>: ⚠️ 軽微な懸念あり — low/medium severity の指摘が 1〜3 件。読む際の注意点ありですが、致命的ではありません。</p>
+<p><em>レビュアーの説明: The Japanese translation faithfully renders the English original's key findings, numerical data, and structural organization. However, there are three substantive issues: (1) the opening paragraph's characterization of the president differs ('President 渡邊充範' vs. implicit leadership role in English), (2) minor source type labeling inconsistency ('sec_edgar' inserted in Japanese version where original says 'Sources:'), and (3) the addition of interpretive detail ('会長名で' = 'as chairman') that is not explicitly stated in the English original.</em></p>
+<p><em>各 issue の見方: <code>category</code> は何が変だったか、<code>severity</code> は重大度 (low/medium/high)。原本と訳文の該当部分を併記しているので、ご自身の目で比較してください。</em></p>
+<ol>
+<li><strong>[hallucination / low]</strong> The English original identifies 渡邊充範 as 'President' (社長), but the Japanese translation states '会長' (Chairman). This is a substantive difference in corporate title and may misrepresent the signatory's role.
+   - 原本: 「The cover confirms the filing was directed to the Kanto Financial Bureau and signed by President 渡邊充範.」
+   - 訳文: 「関東財務局宛に渡邊充範会長名で署名されています。」</li>
+<li><strong>[hallucination / low]</strong> The Japanese version inserts a source-type label '<code>sec_edgar</code>' that does not appear in the English original. In the English, sources are cited directly; the Japanese adds this metadata label inconsistently across multiple findings.
+   - 原本: 「Sources: [EDINET 有価証券報告書 第106期] <a href="https://disclosure2dl.edinet-fsa.go.jp/searchdocument/pdf/S100XSPO.pdf」">https://disclosure2dl.edinet-fsa.go.jp/searchdocument/pdf/S100XSPO.pdf」</a>
+   - 訳文: 「出典: <code>sec_edgar</code> [EDINET 有価証券報告書 第 106 期] · <a href="https://disclosure2dl.edinet-fsa.go.jp/searchdocument/pdf/S100XSPO.pdf」">https://disclosure2dl.edinet-fsa.go.jp/searchdocument/pdf/S100XSPO.pdf」</a></li>
+<li><strong>[hallucination / low]</strong> The Japanese translation adds interpretive gloss ('会長名で' = Chairman's name) that does not appear in the English original, which simply states 'signed by President.' This embellishment, while minor, represents added interpretation beyond faithful translation.
+   - 原本: 「The cover confirms the filing was directed to the Kanto Financial Bureau and signed by President 渡邊充範.」
+   - 訳文: 「関東財務局宛に渡邊充範会長名で署名されています。ただし、具体的に何の重要な出来事だったのかは、今回の調査で確認できた範囲では明らかになっていません。」</li>
+</ol>
+<div class="osint-footer">Generated by osint engine — Investigator + Adversary + Translator + Translation Reviewer</div>
+</main>
+</body>
+</html>

@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OSINT レポート — 任天堂</title>
+<style>
+
+:root {
+  --bg: #fafaf7;
+  --panel: #ffffff;
+  --ink: #1a1a1a;
+  --ink-soft: #4a4a4a;
+  --ink-mute: #8a8a8a;
+  --accent: #2563eb;
+  --accent-soft: #dbeafe;
+  --rule: #e5e5e0;
+  --code-bg: #f3f3ee;
+  --clean: #16a34a;
+  --minor: #d97706;
+  --major: #dc2626;
+  --neutral: #6b7280;
+  --challenge-bg: #fef9e7;
+  --challenge-border: #d97706;
+  --max-width: 820px;
+}
+
+* { box-sizing: border-box; }
+html { font-size: 16px; -webkit-text-size-adjust: 100%; }
+body {
+  font-family: "Noto Sans JP", "Yu Gothic", "Hiragino Sans", "Hiragino Kaku Gothic ProN",
+               -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+  margin: 0;
+  padding: 0;
+  line-height: 1.85;
+  font-feature-settings: "palt";
+}
+
+main {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: 48px 32px 96px;
+  background: var(--panel);
+  min-height: 100vh;
+  box-shadow: 0 0 40px rgba(0,0,0,0.04);
+}
+
+h1 {
+  font-size: 2.1rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  margin: 0 0 8px 0;
+  padding-bottom: 12px;
+  border-bottom: 3px solid var(--ink);
+}
+
+h2 {
+  font-size: 1.4rem;
+  font-weight: 700;
+  margin: 48px 0 16px 0;
+  padding-left: 14px;
+  border-left: 5px solid var(--accent);
+  letter-spacing: 0.02em;
+}
+
+h3 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin: 28px 0 12px 0;
+  color: var(--ink);
+}
+
+p { margin: 12px 0; }
+
+a {
+  color: var(--accent);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: border-color 0.15s;
+}
+a:hover { border-bottom-color: var(--accent); }
+
+ul, ol {
+  padding-left: 1.6em;
+  margin: 12px 0;
+}
+li { margin: 6px 0; }
+li > ul, li > ol { margin: 4px 0; }
+
+/* Meta header (1st emphasis line) */
+h1 + p > em:first-child,
+h1 + p em:first-child {
+  display: inline-block;
+  color: var(--ink-mute);
+  font-style: normal;
+  font-size: 0.9rem;
+  letter-spacing: 0.02em;
+}
+
+em {
+  color: var(--ink-soft);
+  font-style: normal;
+}
+
+strong { font-weight: 700; }
+
+code {
+  background: var(--code-bg);
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 0.9em;
+  font-family: "JetBrains Mono", "Cascadia Code", Consolas, monospace;
+}
+
+pre {
+  background: var(--code-bg);
+  padding: 16px;
+  border-radius: 6px;
+  overflow-x: auto;
+}
+pre > code {
+  background: none;
+  padding: 0;
+}
+
+blockquote {
+  margin: 16px 0;
+  padding: 12px 18px;
+  border-left: 4px solid var(--accent-soft);
+  background: rgba(219, 234, 254, 0.3);
+  color: var(--ink-soft);
+}
+
+hr {
+  border: none;
+  height: 1px;
+  background: var(--rule);
+  margin: 40px 0;
+}
+
+/* Verdict badges */
+.verdict-badge, .check-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  vertical-align: middle;
+}
+.verdict-clean,  .check-clean  { background: #dcfce7; color: var(--clean); }
+.verdict-minor,  .check-minor  { background: #fef3c7; color: var(--minor); }
+.verdict-major,  .check-major  { background: #fee2e2; color: var(--major); }
+.verdict-neutral               { background: #f3f4f6; color: var(--neutral); }
+
+/* Quality score badges (Phase 3.5 D-step) */
+.quality-badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-weight: 600;
+  font-size: 0.92rem;
+  margin-left: 6px;
+  vertical-align: middle;
+  letter-spacing: 0.02em;
+}
+.quality-high    { background: #d1fae5; color: #065f46; border: 1px solid #16a34a; }
+.quality-medium  { background: #fef3c7; color: #92400e; border: 1px solid #d97706; }
+.quality-low     { background: #fee2e2; color: #991b1b; border: 1px solid #dc2626; }
+.quality-neutral { background: #f1f5f9; color: #475569; border: 1px solid #94a3b8; }
+.badge-icon {
+  display: inline-block;
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  background: currentColor;
+  color: white;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 16px;
+  text-align: center;
+}
+
+/* Open Challenges section (h2 directly followed by paragraph + ol) */
+h2:has(+ em),
+h2:has(+ p > em:only-child) {
+  margin-top: 36px;
+}
+
+/* Highlight 「反論者の未決着論点」「Open Challenges」section */
+h2 + p > em:only-child {
+  display: block;
+  background: var(--challenge-bg);
+  border-left: 4px solid var(--challenge-border);
+  padding: 12px 16px;
+  border-radius: 0 4px 4px 0;
+  margin: 16px 0 20px 0;
+  font-style: normal;
+  color: var(--ink);
+}
+
+/* Source list (collector name in code) */
+ul li code {
+  font-size: 0.82em;
+}
+
+/* Print styling (PDF export friendly) */
+@media print {
+  body { background: white; }
+  main { box-shadow: none; max-width: none; padding: 24px; }
+  h1 { page-break-before: avoid; }
+  h2 { page-break-after: avoid; }
+  a { color: var(--ink); }
+  .verdict-badge, .check-badge, .quality-badge { border: 1px solid currentColor; }
+}
+
+/* Header note (sub-meta after title) */
+main > p:nth-of-type(1) {
+  font-size: 0.9rem;
+  color: var(--ink-mute);
+  margin-bottom: 4px;
+}
+main > p:nth-of-type(2) {
+  font-size: 0.88rem;
+  color: var(--ink-soft);
+  background: #f7f7f1;
+  padding: 12px 16px;
+  border-radius: 6px;
+  border-left: 3px solid var(--neutral);
+}
+
+/* Footer mini-credit (auto-injected) */
+.osint-footer {
+  margin-top: 64px;
+  padding-top: 20px;
+  border-top: 1px solid var(--rule);
+  color: var(--ink-mute);
+  font-size: 0.78rem;
+  text-align: center;
+}
+
+</style>
+</head>
+<body>
+<main>
+<h1 id="osint">OSINT レポート: 任天堂</h1>
+<p><em>ドメイン: <code>financial</code> · 生成日時: 2026-05-25T01:19:18.739483+00:00 · 独立レビューの判定: <span class="verdict-badge verdict-minor"><span class="badge-icon">△</span>軽微な懸念あり</span> · 品質スコア: <span class="quality-badge quality-medium">品質 59/100 (中)</span></em></p>
+<p><em>独立レビューの判定の読み方: <strong>問題なし</strong> = 未決着の指摘なし。<strong>軽微な懸念あり</strong> = 1〜3 件の小〜中程度の指摘あり、注意書きを添えれば使える。<strong>重要な懸念あり</strong> = 主要な主張のうち少なくとも 1 件が単一ソース依存・利害相反・反証情報あり等で、利用前の確認が必要。</em></p>
+<p><em>品質スコアの読み方: 8 指標 (独立レビュー判定 / 単一ソース率 / 引用率 / 鮮度 / クロスソース性 / 訂正シグナル / 翻訳整合性 / 未決着論点数) の重み付き合計、0〜100 点。<strong>高 (80 以上)</strong> = 主要主張が複数ソースで裏付け、新鮮、訂正シグナルなし。<strong>中 (50〜79)</strong> = 一部に単一ソース依存・古さ・訂正フラグあり、判断材料として使えるが要確認。<strong>低 (50 未満)</strong> = 重要な裏付け不足、別途調査推奨。算出アルゴリズムは末尾の Quality 内訳を参照。</em></p>
+<h2 id="top-line-summary">要約 (Top-line summary)</h2>
+<p>任天堂は 2024 年度通期で売上高が 30.3% 低下した後、2025 年度上期 (4 月～9 月) に売上高が 110.1% 増加し、1 兆 995 億円に回復しました。これはニンテンドースイッチ 2 の発売に伴うプラットフォーム立ち上げが要因です。同時に自社株買い計画を実行中であり、2026 年 5 月にはスイッチ 2 の米国価格を 500 ドルに引き上げたことを確認しています。関連する報道では米国の関税圧力との関連が指摘されています。NTDOY (米国預託証券) に関する SEC への大量保有報告書は見当たりませんでした。</p>
+<hr>
+<h2 id="_1">主な調査結果</h2>
+<ul>
+<li><strong>2024 年度の大幅減収から 2025 年度上期に急回復</strong> — 任天堂は 2024 年度通期の売上高を 1 兆 1,649 億円 (前年比 30.3% 減)、当期純利益 2,788 億円、1 株当たり利益 239.47 円、自己資本比率 80.2% と報告しました。その後、2025 年度上期 (4 月～9 月) は売上高が 1 兆 995 億円 (前年同期比 110.1% 増)、営業利益 1,451 億円 (19.5% 増)、当期純利益 1,989 億円、1 株当たり利益 170.87 円を記録しており、わずか 6 ヶ月でスイッチ 2 プラットフォームの本格立ち上げの効果が明確になっています。</li>
+<li>詳細: 急速な減収から回復への転換は、新型ゲーム機の発売サイクルの典型的なパターンを示しています。</li>
+<li>
+<p>出典: <a href="https://disclosure2dl.edinet-fsa.go.jp/searchdocument/pdf/S100W73A.pdf">edinet_kpi_trend</a> · <a href="https://disclosure2dl.edinet-fsa.go.jp/searchdocument/pdf/S100WY6A.pdf">edinet_kpi_trend</a></p>
+</li>
+<li>
+<p><strong>継続中の自社株買い実施</strong> — 任天堂は 2 つの自己株券買付状況報告書 (自社株買い進捗報告) を連続で提出しており、1 つは 2026 年 2 月までの期間 (2026 年 3 月 16 日提出)、もう 1 つは 2026 年 3 月分 (2026 年 4 月 14 日提出) となっています。これは公開市場での継続的な自社株買い計画が実施されていることを示しています。</p>
+</li>
+<li>詳細: 自社株買いは、資本効率性を高める手段として、安定した株主還元戦略の一環です。</li>
+<li>
+<p>出典: <a href="https://disclosure2dl.edinet-fsa.go.jp/searchdocument/pdf/S100XQZK.pdf">edinet</a> · <a href="https://disclosure2dl.edinet-fsa.go.jp/searchdocument/pdf/S100XYFA.pdf">edinet</a></p>
+</li>
+<li>
+<p><strong>2026 年 2 月に臨時報告書を提出</strong> — 任天堂は 2026 年 2 月 27 日に臨時報告書 (重要な出来事を緊急に公表する書類) を提出し、代表取締役社長の古川俊太郎名義となっています。この種の報告書は金融商品取引法に基づき、株主総会決議や子会社の重大な変更、ガバナンスに関わる重要な事象など、重大な企業活動の際に提出が必須です。ただし、今回の調査では提出された文書の抄録から具体的なきっかけとなった事象の詳細は完全には把握できませんでした。</p>
+</li>
+<li>詳細: 臨時報告書の具体的な内容を確認するには、原本 PDF の詳細なレビューが必要です。</li>
+<li>
+<p>出典: <a href="https://disclosure2dl.edinet-fsa.go.jp/searchdocument/pdf/S100XNEH.pdf">edinet</a></p>
+</li>
+<li>
+<p><strong>米国でのスイッチ 2 価格上げ (500 ドル) を関税圧力と結びつける報道</strong> — 任天堂は 2026 年 5 月 8 日にスイッチ 2 の米国価格を 500 ドルに引き上げることを公式に確認しました (従来の約 449.99 ドルから)。ハッカーニュース (233 ポイント獲得の投稿) および The Verge などのメディアは、この値上げを米国の輸入ハードウェアに対する関税圧力と関連付けています。この動きは 2026 年度の売上高と利益率の見通しに直接的な影響を与えます。</p>
+</li>
+<li>詳細: 価格上げの公式な理由の詳細は、オンライン社説や業界報道でも関税が最有力候補として議論されています。</li>
+<li>
+<p>出典: <a href="https://www.nintendo.co.jp/corporate/release/en/2026/260508.html">hn_search</a> · <a href="https://www.videogameschronicle.com/news/nintendo-confirms-switch-2-price-rises-consoles-now-500-in-the-us/">hn_search</a> · <a href="https://www.theverge.com/games/926772/nintendo-switch-2-price-hike-console-gaming-future">hn_search</a></p>
+</li>
+<li>
+<p><strong>タッチスクリーン機能を備えたモンスター捕獲ゲーム関連の特許出願</strong> — オンライン報道によると、任天堂はタッチスクリーン固有の「モンスター捕獲」ゲームメカニクスに関連した特許出願を進めており、ポケットペア開発の『パルワールド』モバイル版を対象にしているとみられます。ただし、これまでのところ出願は成功していないと報じられています。これは民事訴訟とは別の、進行中な知的財産権執行活動です。</p>
+</li>
+<li>詳細: 特許戦略は、ゲーム業界での競争力維持と知的財産保護の重要な手段となります。</li>
+<li>
+<p>出典: <a href="https://gamesfray.com/taking-aim-at-palworld-mobile-nintendo-trying-to-obtain-touchscreen-specific-patent-on-monster-capturing-and-thus-far-failing/">hn_search</a></p>
+</li>
+<li>
+<p><strong>強固な財務体質と高い自己資本比率</strong> — 任天堂の自己資本比率は 2024 年度通期で 80.2%、2025 年度上期で 77.5% と、周知の通り現金が充実し、低レバレッジの資本構造を保持しています。2026 年 5 月 24 日にはブルームバーグ報道によると、日本の金融監督当局 (FSA = 金融庁) が日本企業に対して、株主還元ではなく成長投資に現金を活用するよう促す声明を出しており、任天堂のような現金リッチな発行体の資本還元戦略に影響する可能性がある規制環境が形成されています。</p>
+</li>
+<li>詳細: 金融庁のガイダンス発表は、日本企業全体の資本配分戦略に対する一種の方向転換を示唆しています。</li>
+<li>
+<p>出典: <a href="https://disclosure2dl.edinet-fsa.go.jp/searchdocument/pdf/S100W73A.pdf">edinet_kpi_trend</a> · <a href="https://www.bloomberg.com/news/articles/2026-05-24/japan-regulator-urges-firms-to-use-cash-for-growth-not-returns">news_rss</a></p>
+</li>
+<li>
+<p><strong>米国 SEC への大量保有・大量取得報告書は見当たらず</strong> — SEC EDGAR データベースおよび Schedule 13D/G (大量取得届・大量保有届) を NTDOY (米国預託証券) について照会した結果、最近の該当ファイリングは検出されませんでした。これは NTDOY ADR が OTC (店頭公開) ステータスにあり、NYSE や Nasdaq などの一次上場がないことと一貫性があります。</p>
+</li>
+<li>詳細: 二次市場での ADR 取引では、米国規制当局への大量保有報告義務の閾値や手続きが異なります。</li>
+<li>出典: [sec_edgar]</li>
+</ul>
+<hr>
+<h2 id="_2">深掘り余地のある論点</h2>
+<ul>
+<li>
+<p><strong>2026 年 2 月提出の臨時報告書の具体的内容の確認</strong>: 提出書類の概要では、報告書の具体的なきっかけとなった重要な企業活動が完全に開示されていません。EDINET の全文 PDF (S100XNEH) を手動で詳しく検証すれば、株主総会決議 (例：株式分割、大型買い戻し承認) か、子会社の大規模な再編成か、その他の企業活動かが明確になるでしょう。</p>
+</li>
+<li>
+<p><strong>2025 年度通期 (3 月決算年度) の最終財務報告は未提出</strong>: 今回の調査時点で EDINET では 2025 年度上期 (4 月～9 月) の財務データのみが利用可能でした。2026 年 3 月決算となる 2025 年度通期の年次決算書 (有価証券報告書) はまだ提出されていないため、スイッチ 2 発売が通期売上や利益に与えた影響、および 2026 年度の経営方針が示す見通しは、今後の開示を待つ必要があります。</p>
+</li>
+<li>
+<p><strong>スイッチ 2 の関税負担が営業利益に与える影響の評価</strong>: 米国価格の 500 ドルへの引き上げは確認されていますが、粗利率への具体的な影響 (関税負担のうち消費者が負担した分 vs. 企業が吸収した分) は主要な公開ファイリングで開示されていません。2026 年度第 1 四半期決算書 (四半期報告書) および業績修正 (修正予想利益等) の通知に注目することが重要です。</p>
+</li>
+<li>
+<p><strong>パルワールド訴訟と特許問題の進捗状況</strong>: ポケットペア (パルワールド開発企業) に対する民事訴訟および新しいモバイル向け特許出願は、継続中の知的財産権リスク・マネタイズ戦略を示しています。調査対象期間内に、訴訟和解や判決について述べた臨時報告書は EDINET に提出されていません。</p>
+</li>
+<li>
+<p><strong>自社株買いプログラムの規模と進捗状況の詳細把握</strong>: 提出された 2 件の買い戻し進捗報告書は計画が実行中であることを確認していますが、認可された総額、達成度合い、残余容量などの具体的な数値は、PDF 抄録からは抽出できていません。これらの詳細は買い戻し状況報告書の本文に記載されています。</p>
+</li>
+</ul>
+<hr>
+<h2 id="_3">独立レビューで残った論点</h2>
+<p><em>独立レビューでは、草案の根拠の弱さを指摘しています。以下のカテゴリーに該当します：<code>single_source</code> (引用が 1 件のみ)、<code>conflict_of_interest</code> (情報源が主張から利益を得ている)、<code>stale</code> (データが古い)、<code>causal_overreach</code> (相関を因果関係として述べている)、<code>selection_bias</code> (1 種類の情報源のみ確認)、<code>missing_counter_evidence</code> (明らかな反証情報源をスキップしている)。これらは最終版を参照する前に、読者が検討すべき未解決の論点です。</em></p>
+<p><em>草案は、財務および自社株買いに関する主張について強固な一次情報ソース (EDINET 公開ファイリング) に基づいていますが、関税との関連性、特許出願、および FSA 規制の影響に関する主張は、二次情報源またはドキュメントの不完全な一次資料レビューに依存しており、独立した確認がないまま述べられています。これらについては、情報源の限界とともにユーザーに明示するべきであり、また臨時報告書の内容は最終公開前に完全に抽出すべきです。</em></p>
+<ol>
+<li>
+<p><strong>[単一ソース依存]</strong> ハッカーニュース上のコミュニティ議論が関税圧力との関連を指摘
+   - 問題点: 関税圧力の主張は、二次情報源としてのハッカーニュース議論 (233 ポイント) に依拠しており、任天堂の公式声明または SEC/EDINET ファイリングが価格上げを関税で明確に説明しているわけではありません。
+   - 推奨フォローアップ: 任天堂の 2026 年 5 月 8 日付公式プレスリリース (<a href="https://www.nintendo.co.jp/corporate/release/en/2026/260508.html">https://www.nintendo.co.jp/corporate/release/en/2026/260508.html</a>) で、任天堂自身が関税を値上げの理由として挙げているかどうかを確認するか、EDINET で臨時報告書または業績予想が関税影響に言及している箇所を検索してください。</p>
+</li>
+<li>
+<p><strong>[選択バイアス]</strong> タッチスクリーン型「モンスター捕獲」特許出願が成功していないとの報道
+   - 問題点: 特許の主張は、二次情報源としてのニュース記事 (GamesFray) のハッカーニュース引用のみに基づいており、米国特許庁 (USPTO) または日本の特許庁 (JPO) の一次資料で、特許出願番号、出願日、拒否理由などを確認していません。
+   - 推奨フォローアップ: 日本特許庁 (JPO) データベースまたは USPTO を直接照会し、パルワールド発売以来の任天堂によるモンスター捕獲・タッチスクリーン関連特許出願を検索して、実際の出願文書および公式な拒否理由書 (office action) を取得し、出願状況と拒否理由を確認してください。</p>
+</li>
+<li>
+<p><strong>[因果関係の飛躍]</strong> 金融庁による「現金は成長投資に充てよ」ガイダンスが任天堂の資本還元期待に影響する可能性
+   - 問題点: 草案では金融庁ガイダンスが任天堂の資本還元戦略の期待値に「影響するかもしれない」と述べていますが、任天堂自身がこのガイダンスに応じた、または認識したという証拠がなく、また買い戻し計画の中止や変更を示す証拠もありません。
+   - 推奨フォローアップ: EDINET で 2026 年 5 月～6 月の臨時報告書または経営者向けコメント (決算説明会、投資家説明会) を検索し、任天堂経営陣が金融庁ガイダンスに言及したり、資本配分方針の変更を表明しているかどうかを確認してください。または、5 月 24 日以降、買い戻し計画が中止・減速したかどうかを確認してください。</p>
+</li>
+<li>
+<p><strong>[反証情報の欠落]</strong> 臨時報告書の具体的なきっかけとなった出来事が完全には記載されていない
+   - 問題点: 草案では臨時報告書の内容が不明確であることを認めていますが、最終公開前に、提出される EDINET の全文 PDF (S100XNEH) を取得して内容を確認した形跡がありません。
+   - 推奨フォローアップ: S100XNEH の全文を取得 (<a href="https://disclosure2dl.edinet-fsa.go.jp/searchdocument/pdf/S100XNEH.pdf">https://disclosure2dl.edinet-fsa.go.jp/searchdocument/pdf/S100XNEH.pdf</a>) して精読し、臨時報告書を提出させた重要な企業活動を特定してから、内容を確認したうえで調査結果を更新してください。</p>
+</li>
+<li>
+<p><strong>[単一ソース依存]</strong> 2024 年度の大幅減収、2025 年度上期の急回復 (+110.1% YoY、売上高 1 兆 995 億円)
+   - 問題点: EDINET の半期報告書は一次資料ですが、1 兆 995 億円の数字および 110.1% の前年同期比増減率を検証する第三者の確認 (例：アナリスト評価要約、ニュース報道による同じ数字の引用) がありません。
+   - 推奨フォローアップ: 2025 年度上期の売上高数字を、少なくとも 1 つの独立した情報源 (例：Bloomberg Terminal、FactSet、大手メディアの決算サマリー) で交差確認し、1 兆 995 億円および +110.1% YoY の数字を検証してください。</p>
+</li>
+<li>
+<p><strong>[データの鮮度不足]</strong> NTDOY (米国預託証券) について SEC 大量保有報告書が見当たらない
+   - 問題点: 草案は SEC 検索の結果が「ない」という負の結果に依拠していますが、検索が実行された日時が記載されていません。検索から草案作成までの間に数週間あったら、最近の Schedule 13D/G 出願が見落とされる可能性があります。
+   - 推奨フォローアップ: 報告書を確定する 1～2 日以内に SEC EDGAR 検索を再実行し、NTDOY 関連の最近の大量保有ファイリングが漏れていないことを確認し、検索を実行した日時をドキュメント化してください。</p>
+</li>
+</ol>
+<h2 id="sources">出典一覧 (Sources)</h2>
+<p><em><code>信頼度</code> は確率ではなく、<strong>情報源の種類による粗いラベル</strong>です。読み方:</em></p>
+<ul>
+<li><em><strong>0.95</strong>: 規制当局への一次公式提出書類 (SEC 8-K / 10-K 等)</em></li>
+<li><em><strong>0.90</strong>: 一次資料で構造化データを含む (Form 4 XML 等)</em></li>
+<li><em><strong>0.85</strong>: 一次資料だが直接性がやや弱い (SC 13G 等の受動的開示)</em></li>
+<li><em><strong>0.65</strong>: 二次情報源 (報道記事、SNS・フォーラム投稿)</em></li>
+<li><em><strong>それ以下</strong>: より検証が必要な情報</em></li>
+</ul>
+<p><em>「この情報源が主張をどれだけ直接的に裏付けているか」の目安としてお使いください。</em></p>
+<ul>
+<li><a href="https://gamesfray.com/taking-aim-at-palworld-mobile-nintendo-trying-to-obtain-touchscreen-specific-patent-on-monster-capturing-and-thus-far-failing/">Nintendo trying to obtain touchscreen-specific patent on monster capturing</a> — <code>hn_search</code> (SNS・フォーラム, 信頼度=0.65)</li>
+<li><a href="https://www.theverge.com/games/926772/nintendo-switch-2-price-hike-console-gaming-future">The future of game consoles is looking bleak</a> — <code>hn_search</code> (SNS・フォーラム, 信頼度=0.65)</li>
+<li><a href="https://www.videogameschronicle.com/news/nintendo-confirms-switch-2-price-rises-consoles-now-500-in-the-us/">Nintendo confirms Switch 2 price rises, consoles now $500 in the US</a> — <code>hn_search</code> (SNS・フォーラム, 信頼度=0.65)</li>
+<li><a href="https://www.nintendo.co.jp/corporate/release/en/2026/260508.html">Nintendo announces price increases for Nintendo Switch 2</a> — <code>hn_search</code> (SNS・フォーラム, 信頼度=0.65)</li>
+<li><a href="https://www.bloomberg.com/news/articles/2026-05-24/japan-regulator-urges-firms-to-use-cash-for-growth-not-returns">Japan Regulator Urges Firms to Use Cash for Growth, Not Returns</a> — <code>news_rss</code> (報道記事, 信頼度=0.65)</li>
+<li><a href="https://disclosure2dl.edinet-fsa.go.jp/searchdocument/pdf/S100XYFA.pdf">EDINET 自己株券買付状況報告書 — 任天堂株式会社 (2026-04-14)</a> — <code>edinet</code> (一次資料, 信頼度=0.85)</li>
+<li><a href="https://disclosure2dl.edinet-fsa.go.jp/searchdocument/pdf/S100XQZK.pdf">EDINET 自己株券買付状況報告書 — 任天堂株式会社 (2026-03-16)</a> — <code>edinet</code> (一次資料, 信頼度=0.85)</li>
+<li><a href="https://disclosure2dl.edinet-fsa.go.jp/searchdocument/pdf/S100XNEH.pdf">EDINET 臨時報告書 — 任天堂株式会社 (2026-02-27)</a> — <code>edinet</code> (一次資料, 信頼度=0.95)</li>
+<li><a href="https://disclosure2dl.edinet-fsa.go.jp/searchdocument/pdf/S100W73A.pdf">EDINET PDF — 第85期 (2024-04-01〜2025-03-31) 通期 (連結) (任天堂株式会社)</a> — <code>edinet_kpi_trend</code> (一次資料, 信頼度=0.92)</li>
+<li><a href="https://disclosure2dl.edinet-fsa.go.jp/searchdocument/pdf/S100WY6A.pdf">EDINET PDF — 第86期中間連結会計期間 (2025年4月1日〜2025年9月30日) 半期 (連結) (任天堂株式会社)</a> — <code>edinet_kpi_trend</code> (一次資料, 信頼度=0.92)</li>
+</ul>
+<p><em>本文中で直接引用されなかった参考情報が 27 件、調査中に収集されています (JSON 出力の <code>sources</code> フィールドに完全なリストがあります)。</em></p>
+<h2 id="_4">品質スコア内訳</h2>
+<p><strong>総合品質スコア: 59/100</strong> (中)</p>
+<table>
+<thead>
+<tr>
+<th>指標</th>
+<th>スコア</th>
+<th>重み</th>
+<th>説明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>open_challenges</td>
+<td>10/100</td>
+<td>0.15</td>
+<td>独立レビューが残した未決着論点 6 件 (少ないほど良い)。式: max(0, 100 - count*15)</td>
+</tr>
+<tr>
+<td>single_source</td>
+<td>3/100</td>
+<td>0.05</td>
+<td>1 ソースしか持たない findings の割合 97.5% (低いほど良い)。式: (1-ratio)*100</td>
+</tr>
+<tr>
+<td>adversary_concern</td>
+<td>60/100</td>
+<td>0.2</td>
+<td>独立レビュー総合判定 = minor_concerns (clean=100 / minor=60 / major=20 / unknown=50)</td>
+</tr>
+<tr>
+<td>cited_url</td>
+<td>100/100</td>
+<td>0.15</td>
+<td>draft 中で literal 引用された URL の絶対数 10 件 (10 件以上で満点、収集 37 件のうち)</td>
+</tr>
+<tr>
+<td>staleness</td>
+<td>56/100</td>
+<td>0.1</td>
+<td>最古ソースからの経過 87 日 (新しいほど良い)。式: max(0, 100 - days*0.5)</td>
+</tr>
+<tr>
+<td>diversity</td>
+<td>50/100</td>
+<td>0.2</td>
+<td>利用された collector の異種数 5/10 (多いほどクロスソース性が高い)</td>
+</tr>
+<tr>
+<td>correction_signal</td>
+<td>100/100</td>
+<td>0.1</td>
+<td>訂正報告書で検出された最大規模 = none (none/trivial=高評価、major=要警戒)</td>
+</tr>
+<tr>
+<td>translation_check</td>
+<td>100/100</td>
+<td>0.05</td>
+<td>翻訳未実行 (英語版のみ) → 100 (penalty なし)</td>
+</tr>
+</tbody>
+</table>
+<p><em>算出アルゴリズム: 重み付き合計 (各 0-100): open_challenges<em>0.15, single_source</em>0.05, adversary_concern<em>0.2, cited_url</em>0.15, staleness<em>0.1, diversity</em>0.2, correction_signal<em>0.1, translation_check</em>0.05. band: high (&gt;= 80) / medium (50-79) / low (&lt; 50).</em></p>
+<h2 id="_5">用語集</h2>
+<ul>
+<li><strong>Schedule 13D</strong>: 5% 超の株式保有者が「経営に影響を及ぼす意図あり」で提出する開示。アクティビスト投資家が経営戦略変更を求める場面で用いられる</li>
+</ul>
+<hr>
+<h2 id="_6">翻訳チェック結果</h2>
+<p><em>本セクションは翻訳の品質を<strong>自動チェック</strong>した結果です。<strong>修正はせず</strong>、気になる箇所を flag するだけの設計です (最終判断は人)。「機械チェック」は単純な集合差分で正規表現ベース — false positive (英語の <code>January 25, 2026</code> と日本語の <code>2026 年 1 月 25 日</code> の対応取りこぼし等) を含みます。「LLM レビュアー」は Haiku 4.5 が独立に英日を読み比べた所見で、こちらも完璧ではありません。</em></p>
+<h3 id="_7">機械チェック</h3>
+<p><em>見ている対象: URL / 年号 (4 桁) / 日付 (ISO ↔ 日本語形式変換後) / 通貨表現の集合差分。<strong>「英版のみ」</strong>は原文にあって日本語訳から消えた要素、<strong>「日版のみ」</strong>は逆 (訳文側に追加された)。</em></p>
+<p><strong>判定</strong>: <span class="check-badge check-minor">△ 8 件の不一致</span> — 下記を確認してください。ただし、英語の自然言語日付 (<code>January 25, 2026</code>) と日本語形式 (<code>2026 年 1 月 25 日</code>) の対応取りこぼし等は false positive (誤検出) です。</p>
+<ul>
+<li>日付 (日版のみ — 訳文に追加された): 2026-05-08</li>
+<li>金額表現 (英版のみ — 訳文から消えた): 1, 1451, 170.87, 1989, 239.47, 2788, 449.99</li>
+</ul>
+<h3 id="llm">LLM レビュアー所見</h3>
+<p><em>見ている対象: 数値・日付・固有名詞のずれ、重要情報の欠落、原文にない追加 (ハルシネーション)、意味の歪み、引用 URL の改変。自然な意訳や用語解説の付加は対象外。</em></p>
+<p><strong>判定</strong>: ✅ 問題なし — 個別の指摘なし、原文と訳文は実質一致。そのまま読んで構いません。</p>
+<p><em>レビュアーの説明: すべての数値、日付、固有名詞、URL が英語原本と日本語訳で一致しており、重要な情報の欠落や追加も検出されません。機械生成セクション (用語集、メタデータ、Sources リスト) の日本語表記変更は指示の範囲内です。</em></p>
+<p>(個別の指摘なし)</p>
+<div class="osint-footer">Generated by osint engine — Investigator + Adversary + Translator + Translation Reviewer</div>
+</main>
+</body>
+</html>

@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>個別企業ディープダイブ・サンプルレポート | osint</title>
+<meta name="description" content="EDINET / SEC EDGAR 等の公開開示情報を複数ソース横断で整理し、引用ソースと品質スコアを明示するレポート。日本企業・米企業のサンプル 3 本を公開中。">
+<style>
+  :root {
+    --bg: #fafaf7;
+    --panel: #ffffff;
+    --ink: #1a1a1a;
+    --ink-soft: #4a4a4a;
+    --ink-mute: #8a8a8a;
+    --accent: #2563eb;
+    --rule: #e5e5e0;
+    --high: #16a34a;
+    --med: #d97706;
+    --low: #dc2626;
+    --max-width: 760px;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: "Noto Sans JP", "Yu Gothic", "Hiragino Sans", -apple-system, "Segoe UI", sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    margin: 0;
+    line-height: 1.85;
+    font-feature-settings: "palt";
+  }
+  main {
+    max-width: var(--max-width);
+    margin: 0 auto;
+    padding: 56px 28px 96px;
+    background: var(--panel);
+    min-height: 100vh;
+    box-shadow: 0 0 40px rgba(0,0,0,0.04);
+  }
+  h1 {
+    font-size: 1.9rem;
+    font-weight: 700;
+    margin: 0 0 6px;
+    padding-bottom: 12px;
+    border-bottom: 3px solid var(--ink);
+    letter-spacing: 0.02em;
+  }
+  h2 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin: 48px 0 14px;
+    padding-left: 12px;
+    border-left: 4px solid var(--accent);
+  }
+  p { margin: 12px 0; color: var(--ink-soft); }
+  a { color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color .15s; }
+  a:hover { border-bottom-color: var(--accent); }
+  .lede { color: var(--ink); font-size: 1.05rem; margin-top: 18px; }
+  .sample-list { list-style: none; padding: 0; margin: 18px 0 0; }
+  .sample-list li {
+    padding: 18px 20px;
+    margin: 12px 0;
+    background: #fafafa;
+    border: 1px solid var(--rule);
+    border-radius: 6px;
+  }
+  .sample-list li:hover { border-color: var(--accent); }
+  .sample-title { font-size: 1.05rem; font-weight: 700; margin: 0 0 6px; }
+  .sample-desc { color: var(--ink-soft); margin: 4px 0 8px; font-size: 0.95rem; }
+  .quality-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 4px;
+    font-weight: 600;
+    font-size: 0.85rem;
+    margin-left: 6px;
+  }
+  .q-high   { background: #d1fae5; color: #065f46; border: 1px solid var(--high); }
+  .q-medium { background: #fef3c7; color: #92400e; border: 1px solid var(--med); }
+  .q-low    { background: #fee2e2; color: #991b1b; border: 1px solid var(--low); }
+  ul.bullets { padding-left: 1.3em; }
+  ul.bullets li { margin: 6px 0; color: var(--ink-soft); }
+  .cta {
+    margin: 36px 0 0;
+    padding: 22px 24px;
+    background: #f1f5fb;
+    border-left: 4px solid var(--accent);
+    border-radius: 4px;
+  }
+  .cta h2 { margin-top: 0; border-left: none; padding-left: 0; }
+  .footer {
+    margin-top: 64px;
+    padding-top: 18px;
+    border-top: 1px solid var(--rule);
+    font-size: 0.85rem;
+    color: var(--ink-mute);
+  }
+  code { background: #f3f3ee; padding: 2px 6px; border-radius: 3px; font-size: 0.92em; }
+</style>
+</head>
+<body>
+<main>
+
+<h1>個別企業ディープダイブ・サンプル</h1>
+<p class="lede">
+  EDINET (金融庁) / SEC EDGAR (米国) / 各国経済報道などの<strong>公開開示情報</strong>を、
+  複数ソース横断で AI が整理し、<strong>引用ソース URL</strong>と<strong>品質スコア</strong>を
+  明示してレポート化しています。当面は個別企業のディープダイブに特化し、マクロ指標は扱いません。
+</p>
+
+<h2>サンプルレポート (3 本)</h2>
+<ul class="sample-list">
+
+  <li>
+    <div class="sample-title">
+      任天堂株式会社 (証券コード 7974) — Switch 2 後の業績推移と財務 KPI
+      <span class="quality-badge q-medium">品質 59/100 (中)</span>
+    </div>
+    <p class="sample-desc">
+      EDINET の有報・四半期・半期報告書から N 期 KPI 推移を抽出。
+      FY2025 通期 (-30.3% YoY) → FY2026 半期 (+110.1% YoY) という
+      ハードウェアサイクル転換期の業績変化を 1 行で可視化。
+    </p>
+    <a href="./nintendo-7974.html">レポートを開く →</a>
+  </li>
+
+  <li>
+    <div class="sample-title">
+      The Walt Disney Company (NYSE: DIS) — アクティビスト活動とインサイダー取引
+      <span class="quality-badge q-medium">品質 65/100 (中)</span>
+    </div>
+    <p class="sample-desc">
+      SEC EDGAR の 8-K / 10-K、Form 4 (インサイダー取引)、Schedule 13D/G (5%+ 保有開示)
+      を横断的に整理。プロキシ・ファイト関連の開示シーケンスをタイムラインで提示。
+    </p>
+    <a href="./disney-dis.html">レポートを開く →</a>
+  </li>
+
+  <li>
+    <div class="sample-title">
+      四国化成ホールディングス株式会社 (証券コード 4099) — 訂正有報の中身を読む
+      <span class="quality-badge q-medium">品質 53/100 (中)</span>
+    </div>
+    <p class="sample-desc">
+      EDINET に提出された<strong>訂正有価証券報告書</strong>と原本を AI で比較し、
+      何が訂正されたか・訂正規模 (些細 / 軽微 / 中程度 / 重大) を構造化抽出。
+      訂正の頻度と規模は開示信頼度のシグナルとして扱えます。
+    </p>
+    <a href="./shikoku-kasei-40990.html">レポートを開く →</a>
+  </li>
+
+</ul>
+
+<h2>何が他と違うか</h2>
+<ul class="bullets">
+  <li>各記述に<strong>出典 URL を 1 件以上付与</strong>。出典のない主張は記載しません。</li>
+  <li>独立レビュー (別コンテキストで動く LLM) が weakness を flag し、未決着論点として残します。</li>
+  <li>8 指標の<strong>品質スコア (0〜100、緑/黄/赤)</strong>をレポート冒頭に表示。算出アルゴリズムも末尾で全開示。</li>
+  <li>日本企業は EDINET 一次資料 + 英語報道 + ADR ティッカー経由の SEC 開示の<strong>三経路クロス</strong>で調査します。</li>
+</ul>
+
+<h2>ご留意事項</h2>
+<ul class="bullets">
+  <li>本レポートは公開済の開示情報を整理・要約した<strong>観察的分析</strong>であり、
+      個別銘柄の売買推奨や将来の価格予測は含みません。</li>
+  <li>当面は「個別企業のディープダイブ」に特化しています。マクロ経済・セクター動向・通貨予測の依頼は受けていません。</li>
+  <li>データソースには EDINET (金融庁)、SEC EDGAR (米国)、Reuters / Bloomberg / FT / Yahoo Finance、
+      ITmedia / 東洋経済 / ダイヤモンド / NHK / Yahoo!ニュース 等の公開フィードが含まれます。</li>
+  <li>翻訳・要約の精度には限界があります。重要な判断材料として用いる際は、
+      レポート中に明示された一次資料 (EDINET / SEC) を必ず原文でご確認ください。</li>
+</ul>
+
+<div class="cta">
+  <h2>βテスト参加にご関心のある方へ</h2>
+  <p>
+    現段階ではクローズドβとして運用しており、ご関心のある方は
+    SNS の固定ポストよりお問い合わせください。サンプルレポートに対するご意見・
+    ご要望もあわせて伺っております。
+  </p>
+</div>
+
+<div class="footer">
+  サンプル生成日: 2026 年 5 月 25 日 / 編集: osint 編集部
+</div>
+
+</main>
+</body>
+</html>

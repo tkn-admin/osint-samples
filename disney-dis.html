@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OSINT レポート — DIS</title>
+<style>
+
+:root {
+  --bg: #fafaf7;
+  --panel: #ffffff;
+  --ink: #1a1a1a;
+  --ink-soft: #4a4a4a;
+  --ink-mute: #8a8a8a;
+  --accent: #2563eb;
+  --accent-soft: #dbeafe;
+  --rule: #e5e5e0;
+  --code-bg: #f3f3ee;
+  --clean: #16a34a;
+  --minor: #d97706;
+  --major: #dc2626;
+  --neutral: #6b7280;
+  --challenge-bg: #fef9e7;
+  --challenge-border: #d97706;
+  --max-width: 820px;
+}
+
+* { box-sizing: border-box; }
+html { font-size: 16px; -webkit-text-size-adjust: 100%; }
+body {
+  font-family: "Noto Sans JP", "Yu Gothic", "Hiragino Sans", "Hiragino Kaku Gothic ProN",
+               -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+  margin: 0;
+  padding: 0;
+  line-height: 1.85;
+  font-feature-settings: "palt";
+}
+
+main {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: 48px 32px 96px;
+  background: var(--panel);
+  min-height: 100vh;
+  box-shadow: 0 0 40px rgba(0,0,0,0.04);
+}
+
+h1 {
+  font-size: 2.1rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  margin: 0 0 8px 0;
+  padding-bottom: 12px;
+  border-bottom: 3px solid var(--ink);
+}
+
+h2 {
+  font-size: 1.4rem;
+  font-weight: 700;
+  margin: 48px 0 16px 0;
+  padding-left: 14px;
+  border-left: 5px solid var(--accent);
+  letter-spacing: 0.02em;
+}
+
+h3 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin: 28px 0 12px 0;
+  color: var(--ink);
+}
+
+p { margin: 12px 0; }
+
+a {
+  color: var(--accent);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: border-color 0.15s;
+}
+a:hover { border-bottom-color: var(--accent); }
+
+ul, ol {
+  padding-left: 1.6em;
+  margin: 12px 0;
+}
+li { margin: 6px 0; }
+li > ul, li > ol { margin: 4px 0; }
+
+/* Meta header (1st emphasis line) */
+h1 + p > em:first-child,
+h1 + p em:first-child {
+  display: inline-block;
+  color: var(--ink-mute);
+  font-style: normal;
+  font-size: 0.9rem;
+  letter-spacing: 0.02em;
+}
+
+em {
+  color: var(--ink-soft);
+  font-style: normal;
+}
+
+strong { font-weight: 700; }
+
+code {
+  background: var(--code-bg);
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 0.9em;
+  font-family: "JetBrains Mono", "Cascadia Code", Consolas, monospace;
+}
+
+pre {
+  background: var(--code-bg);
+  padding: 16px;
+  border-radius: 6px;
+  overflow-x: auto;
+}
+pre > code {
+  background: none;
+  padding: 0;
+}
+
+blockquote {
+  margin: 16px 0;
+  padding: 12px 18px;
+  border-left: 4px solid var(--accent-soft);
+  background: rgba(219, 234, 254, 0.3);
+  color: var(--ink-soft);
+}
+
+hr {
+  border: none;
+  height: 1px;
+  background: var(--rule);
+  margin: 40px 0;
+}
+
+/* Verdict badges */
+.verdict-badge, .check-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  vertical-align: middle;
+}
+.verdict-clean,  .check-clean  { background: #dcfce7; color: var(--clean); }
+.verdict-minor,  .check-minor  { background: #fef3c7; color: var(--minor); }
+.verdict-major,  .check-major  { background: #fee2e2; color: var(--major); }
+.verdict-neutral               { background: #f3f4f6; color: var(--neutral); }
+
+/* Quality score badges (Phase 3.5 D-step) */
+.quality-badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-weight: 600;
+  font-size: 0.92rem;
+  margin-left: 6px;
+  vertical-align: middle;
+  letter-spacing: 0.02em;
+}
+.quality-high    { background: #d1fae5; color: #065f46; border: 1px solid #16a34a; }
+.quality-medium  { background: #fef3c7; color: #92400e; border: 1px solid #d97706; }
+.quality-low     { background: #fee2e2; color: #991b1b; border: 1px solid #dc2626; }
+.quality-neutral { background: #f1f5f9; color: #475569; border: 1px solid #94a3b8; }
+.badge-icon {
+  display: inline-block;
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  background: currentColor;
+  color: white;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 16px;
+  text-align: center;
+}
+
+/* Open Challenges section (h2 directly followed by paragraph + ol) */
+h2:has(+ em),
+h2:has(+ p > em:only-child) {
+  margin-top: 36px;
+}
+
+/* Highlight 「反論者の未決着論点」「Open Challenges」section */
+h2 + p > em:only-child {
+  display: block;
+  background: var(--challenge-bg);
+  border-left: 4px solid var(--challenge-border);
+  padding: 12px 16px;
+  border-radius: 0 4px 4px 0;
+  margin: 16px 0 20px 0;
+  font-style: normal;
+  color: var(--ink);
+}
+
+/* Source list (collector name in code) */
+ul li code {
+  font-size: 0.82em;
+}
+
+/* Print styling (PDF export friendly) */
+@media print {
+  body { background: white; }
+  main { box-shadow: none; max-width: none; padding: 24px; }
+  h1 { page-break-before: avoid; }
+  h2 { page-break-after: avoid; }
+  a { color: var(--ink); }
+  .verdict-badge, .check-badge, .quality-badge { border: 1px solid currentColor; }
+}
+
+/* Header note (sub-meta after title) */
+main > p:nth-of-type(1) {
+  font-size: 0.9rem;
+  color: var(--ink-mute);
+  margin-bottom: 4px;
+}
+main > p:nth-of-type(2) {
+  font-size: 0.88rem;
+  color: var(--ink-soft);
+  background: #f7f7f1;
+  padding: 12px 16px;
+  border-radius: 6px;
+  border-left: 3px solid var(--neutral);
+}
+
+/* Footer mini-credit (auto-injected) */
+.osint-footer {
+  margin-top: 64px;
+  padding-top: 20px;
+  border-top: 1px solid var(--rule);
+  color: var(--ink-mute);
+  font-size: 0.78rem;
+  text-align: center;
+}
+
+</style>
+</head>
+<body>
+<main>
+<h1 id="osint-dis">OSINT レポート: DIS</h1>
+<p><em>ドメイン: <code>financial</code> · 生成日時: 2026-05-25T01:21:48.045095+00:00 · 独立レビューの判定: <span class="verdict-badge verdict-minor"><span class="badge-icon">△</span>軽微な懸念あり</span> · 品質スコア: <span class="quality-badge quality-medium">品質 65/100 (中)</span></em></p>
+<p><em>独立レビューの判定の読み方: <strong>問題なし</strong> = 未決着の指摘なし。<strong>軽微な懸念あり</strong> = 1〜3 件の小〜中程度の指摘あり、注意書きを添えれば使える。<strong>重要な懸念あり</strong> = 主要な主張のうち少なくとも 1 件が単一ソース依存・利害相反・反証情報あり等で、利用前の確認が必要。</em></p>
+<p><em>品質スコアの読み方: 8 指標 (独立レビュー判定 / 単一ソース率 / 引用率 / 鮮度 / クロスソース性 / 訂正シグナル / 翻訳整合性 / 未決着論点数) の重み付き合計、0〜100 点。<strong>高 (80 以上)</strong> = 主要主張が複数ソースで裏付け、新鮮、訂正シグナルなし。<strong>中 (50〜79)</strong> = 一部に単一ソース依存・古さ・訂正フラグあり、判断材料として使えるが要確認。<strong>低 (50 未満)</strong> = 重要な裏付け不足、別途調査推奨。算出アルゴリズムは末尾の Quality 内訳を参照。</em></p>
+<h2 id="top-line-summary">要約 (Top-line summary)</h2>
+<p>ウォルト・ディズニー・カンパニーは 2026 年 5 月 6 日に 2026 年度第 2 四半期決算書 (10-Q、対象期間 3 月 28 日締切) を提出し、同日に重要事象開示書類 (8-K) を提出しました。2026 年 2 月から 5 月にかけて計 5 件の 8-K が提出されており、特に 3 月の年次株主総会関連の動きが確認されます。現在のところ経営意図を伴う大量保有届 (5 %超保有の活動株主) は検出されず、確認される機関投資家の保有はすべて純投資目的の届出です。2026 年 4 月 2 日、取締役全員が株式報酬を受け取りました。一方、ディズニーランドの顔認証技術導入をめぐる訴訟および報道が確認され、公園事業に対する法的・評判リスクが生じています。</p>
+<hr>
+<h2 id="key-findings">主な調査結果 (Key findings)</h2>
+<ul>
+<li><strong>2026 年度第 2 四半期決算書提出</strong> — ディズニーは 3 月 28 日締切の四半期決算書 (10-Q) を 2026 年 5 月 6 日に提出し、ストリーミング、テーマパーク、エンターテイメント各事業の四半期財務概況を開示しました。</li>
+<li>
+<p>出典: sec_edgar · <a href="https://www.sec.gov/Archives/edgar/data/1744489/000174448926000037/dis-20260328.htm">https://www.sec.gov/Archives/edgar/data/1744489/000174448926000037/dis-20260328.htm</a></p>
+</li>
+<li>
+<p><strong>決算日当日の重要事象開示</strong> — 2026 年 5 月 6 日 (10-Q 提出と同日) に重要事象開示書類 (8-K) が提出されました。これは決算業績の報道発表に対応する書類と考えられます。</p>
+</li>
+<li>
+<p>出典: sec_edgar · <a href="https://www.sec.gov/Archives/edgar/data/1744489/000174448926000036/dis-20260506.htm">https://www.sec.gov/Archives/edgar/data/1744489/000174448926000036/dis-20260506.htm</a></p>
+</li>
+<li>
+<p><strong>年次株主総会関連の重要事象開示</strong> — 2026 年 3 月 20 日に開示書類が提出され、3 月 18 日に開催されたディズニー年次株主総会に対応しています (2026 年 1 月 22 日提出のプロキシステートメント (代理人投票説明書) で確認)。この 8-K は総会採決結果を報告したと考えられます。</p>
+</li>
+<li>
+<p>出典: sec_edgar · <a href="https://www.sec.gov/Archives/edgar/data/1744489/000162828026020172/dis-20260318.htm、">https://www.sec.gov/Archives/edgar/data/1744489/000162828026020172/dis-20260318.htm、</a> <a href="https://www.sec.gov/Archives/edgar/data/1744489/000174448926000013/dis-20260122.htm">https://www.sec.gov/Archives/edgar/data/1744489/000174448926000013/dis-20260122.htm</a></p>
+</li>
+<li>
+<p><strong>2 月下旬～3 月初旬の重要事象開示複数件</strong> — 2026 年 2 月 20 日および 2 月 27 日発生の事象を扱う 8-K が 2 月 24 日および 3 月 3 日に提出されました。これらは第 1 四半期決算開示活動、ならびに経営・取締役会関連の活動に対応していると考えられます。</p>
+</li>
+<li>
+<p>出典: sec_edgar · <a href="https://www.sec.gov/Archives/edgar/data/1744489/000174448926000025/dis-20260220.htm、">https://www.sec.gov/Archives/edgar/data/1744489/000174448926000025/dis-20260220.htm、</a> <a href="https://www.sec.gov/Archives/edgar/data/1744489/000119312526088356/d116769d8k.htm">https://www.sec.gov/Archives/edgar/data/1744489/000119312526088356/d116769d8k.htm</a></p>
+</li>
+<li>
+<p><strong>取締役全員への年次株式報酬付与 (2026 年 4 月 2 日)</strong> — ディズニー取締役会の 10 名全員が 2026 年 4 月 2 日に株式報酬 (Form 4、取引コード A = 付与) を受け取りました。受領者には他社の重要職務者が含まれています：ジェームズ・ゴーマン (1,477 株)、マリア・エレナ・ラゴマシーノ (1,267 株)、メアリー・バラ (1,253 株)、デリカ・ライス (1,230 株)、キャロリン・エバーソン (1,065 株)、カルヴィン・マクドナルド (1,081 株)、エイミー・チャン (1,081 株)、マイケル・フローマン (1,088 株)、ジェフリー・ウィリアムズ (154 株)、ジェレミー・ダーロック (1,034 株、うち 470 株は税務計算用に没収)。最近の Form 4 データでは、経営幹部によるオープンマーケット (市場) での株式買却・売却は観察されていません。</p>
+</li>
+<li>
+<p>出典: sec_form4 · <a href="https://www.sec.gov/Archives/edgar/data/1744489/000162828026023330/xslF345X06/wk-form4_1775167292.xml、">https://www.sec.gov/Archives/edgar/data/1744489/000162828026023330/xslF345X06/wk-form4_1775167292.xml、</a> <a href="https://www.sec.gov/Archives/edgar/data/1744489/000162828026023334/xslF345X06/wk-form4_1775167325.xml、">https://www.sec.gov/Archives/edgar/data/1744489/000162828026023334/xslF345X06/wk-form4_1775167325.xml、</a> <a href="https://www.sec.gov/Archives/edgar/data/1744489/000162828026023329/xslF345X06/wk-form4_1775167285.xml">https://www.sec.gov/Archives/edgar/data/1744489/000162828026023329/xslF345X06/wk-form4_1775167285.xml</a></p>
+</li>
+<li>
+<p><strong>物言う株主の活動確認なし</strong> — ディズニーに関する最新の大量保有届 (13D/G) はいずれも 2024 年 2 月および 1 月付けの純投資目的届 (SC 13G = 受動的受益所有権届) です。経営に関わる意図を持つ活動株主届 (SC 13D) は確認できません。これは過去数年、5 %超の大量保有者がディズニーに対して経営関与意図を公表していないことを示しています。</p>
+</li>
+<li>
+<p>出典: sec_13d_g · <a href="https://www.sec.gov/Archives/edgar/data/1744489/000110465924020136/tv0144-waltdisneycothe.htm、">https://www.sec.gov/Archives/edgar/data/1744489/000110465924020136/tv0144-waltdisneycothe.htm、</a> <a href="https://www.sec.gov/Archives/edgar/data/1744489/000108636424004870/us2546871060_012624.txt">https://www.sec.gov/Archives/edgar/data/1744489/000108636424004870/us2546871060_012624.txt</a></p>
+</li>
+<li>
+<p><strong>ディズニーランド顔認証導入をめぐる法的リスク</strong> — ハッカー・ニュースで 2 件の記事が確認されました：ディズニーランドの入園ゲートに顔認証技術が導入された (ザ・ガーディアン、2026 年 4 月 28 日報道)、ならびにこのプログラムに対して 500 万ドルの訴訟がディズニーを相手に提起された (報道)。これはテーマパーク事業に対する新興の法的・評判リスクです。</p>
+</li>
+<li>
+<p>出典: hn_search · <a href="https://www.theguardian.com/us-news/2026/apr/28/disneyland-entrance-facial-recognition、">https://www.theguardian.com/us-news/2026/apr/28/disneyland-entrance-facial-recognition、</a> <a href="https://reclaimthenet.org/disney-faces-5m-lawsuit-over-disneyland-facial-recognition">https://reclaimthenet.org/disney-faces-5m-lawsuit-over-disneyland-facial-recognition</a></p>
+</li>
+<li>
+<p><strong>FiveThirtyEight の終了が技術コミュニティで話題化</strong> — ハッカー・ニュースの高評価投稿 (456 アップボート) で、ディズニーが傘下の ABC が買収したデータジャーナリズム媒体 FiveThirtyEight を「消滅させた」ことが取り上げられました。この閉鎖はディズニーのメディア資産戦略に対するコメンタリーを生みました。</p>
+</li>
+<li>
+<p>出典: hn_search · <a href="https://www.natesilver.net/p/disney-erased-fivethirtyeight">https://www.natesilver.net/p/disney-erased-fivethirtyeight</a></p>
+</li>
+<li>
+<p><strong>「ディズニーの債務」に関する論議</strong> — ハッカー・ニュースに「ディズニーの債務」という投稿が 2026 年 5 月 5 日付けで現れ、2026 年度第 2 四半期決算書の提出 1 日前にコミュニティが議論を交わしました。これは最新決算時点でのディズニーのレバレッジ (債務) 比率に対する投資家コミュニティの関心を示唆しています。</p>
+</li>
+<li>出典: hn_search · <a href="https://www.manton.org/2026/05/05/disney-debt.html">https://www.manton.org/2026/05/05/disney-debt.html</a></li>
+</ul>
+<hr>
+<h2 id="open-threads-worth-deeper-investigation">深掘り余地のある論点 (Open Threads worth deeper investigation)</h2>
+<ul>
+<li>
+<p><strong>2026 年度第 2 四半期の財務指標</strong>: 2026 年 5 月 6 日提出の 10-Q は主要な数値指標 (売上高、事業セグメント別営業利益、ストリーミング購読者数、テーマパーク EBITDA) について詳細に解析されていません。dis-20260328.htm の全文確認により、直接消費者向け (DTC) ストリーミング事業が持続的な黒字化を達成したかどうか、およびテーマパークが前年同期比でどう進捗しているかが判明します。</p>
+</li>
+<li>
+<p><strong>2 月・3 月の 8-K の内容</strong>: 2026 年 3 月 3 日提出 (2 月 27 日事象対応) および 2 月 24 日提出 (2 月 20 日事象対応) の 8-K について詳細が確認されていません。これらは業績見通しの改定、債務取引、決算発表以外の重大な企業活動を含むかもしれず、内容確認が必要です。</p>
+</li>
+<li>
+<p><strong>純投資目的の大量保有届 (13G) 保有者の特定</strong>: 2024 年初のころに提出された SC 13G/A および SC 13G は、5 %超の純投資目的の機関投資家がどの法人であるかを特定するために開かれていません (通常はヴァンガード社およびブラックロック社が大型株の大量保有者と想定されますが、提出された書類では未確認)。前年比での保有比率の変化は、機関投資家のディズニーに対する確信度の変化を示します。</p>
+</li>
+<li>
+<p><strong>顔認証訴訟の法的リスク範囲</strong>: ディズニーランド顔認証に関する 500 万ドル訴訟 (情報源は単一、信頼度は低い) は、管轄地の生体認証プライバシー法 (例：イリノイ州 BIPA) 次第で、より広い集団訴訟リスクを代表するかもしれません。訴訟の規模と進捗状況は、裁判所記録の直接確認に値します。</p>
+</li>
+<li>
+<p><strong>経営層の交代・後継者開示</strong>: 2026 年 1 月 22 日提出の代理人投票説明書 (DEF 14A) は、ボブ・アイガーの任期に関連する CEO 後継者計画の新たな記述を含むかもしれません。アイガーの契約およびディズニーの経営パイプラインについての継続的な公開議論を踏まえると、当該代理人投票説明書の経営統治開示は直接確認の価値があります。</p>
+</li>
+</ul>
+<hr>
+<h2 id="open-challenges">独立レビューで残った論点 (Open Challenges)</h2>
+<p><em>独立レビュー (別の評価プロセスで実施) は、上記の草稿における証拠の弱点を指摘しています。レビューは草稿を書き直すのではなく、問題を提示します。分類：単一ソース依存 (引用が 1 件のみ) / 利害相反 (情報源が主張から利益を得る) / データの鮮度不足 (古い情報) / 因果関係の飛躍 (相関を因果関係と見なす) / 選択バイアス (検査対象が片寄っている) / 反証情報の欠落 (明らかな反論元が検査されていない)。これらは読者が草稿の主張を利用する前に検討すべき未解決の論点です。</em></p>
+<ol>
+<li>
+<p><strong>[単一ソース依存]</strong> ディズニーランドの顔認証技術が公園の出入口に導入されたこと、およびこのプログラムに対して 500 万ドルの訴訟がディズニーを相手に提起されたこと。
+   - 500 万ドル訴訟の主張は、ハッカー・ニュースの単一の情報源 (ReclaimTheNet) にのみ帰属しており、裁判所記録、法律データベース、主流ビジネス報道からの独立した確認がありません。
+   - 推奨フォローアップ: PACER (連邦裁判所オンラインシステム) または訴訟が提起された州の裁判所記録を確認し、事件番号、原告、および実際に請求されている損害賠償額を検証してください。</p>
+</li>
+<li>
+<p><strong>[データの鮮度不足]</strong> ディズニーに関する最新の大量保有届 (13D/G) は、2024 年 2 月および 1 月付けの純投資目的届です。
+   - 引用された 13G 届は 2024 年初時点のもので、現在から 18 ヶ月以上前のものです。草稿は、機関投資家が毎年 2 月に提出する更新版 (SC 13G/A) が 2025 年または 2026 年初に提出されたかどうかを確認しておらず、また実際の保有者法人名も特定していません。
+   - 推奨フォローアップ: SEC EDGAR で 2025 年 2 月および 2026 年 2 月付けの SC 13G/A 届を検索し、最新の機関投資家の保有状況を確認し、新たに 5 %超の保有者が出現したかどうかを確認してください。</p>
+</li>
+<li>
+<p><strong>[因果関係の飛躍]</strong> 「ディズニーの債務」というハッカー・ニュースの投稿 (2026 年 5 月 5 日付け) が 2026 年度第 2 四半期決算書提出の 1 日前にコミュニティで議論を集め、最新決算時点でのディズニーのレバレッジ比率に対する投資家コミュニティの関心を示唆していること。
+   - 草稿の主張は、HN 投稿が「投資家コミュニティの関心を示唆する」と推論していますが、決算発表 1 日前の単一の HN 投稿は、偶然のタイミング、または投稿者が事前に感知した信号である可能性が高く、真の投資家懸念の証拠または企業行動の因果的な推進力の証拠ではありません。
+   - 推奨フォローアップ: 因果的表現を削除するか、決算日前後に債務を懸念事項として明示的に述べているアナリストレポート、決算説明会記録、機関投資家の資金運用者コメンタリー等、複数の独立情報源を引用してください。</p>
+</li>
+<li>
+<p><strong>[単一ソース依存]</strong> ディズニーランドの出入口に顔認証技術が導入されたこと (2026 年 4 月 28 日にザ・ガーディアンが報道)。
+   - 顔認証導入は、ハッカー・ニュース経由の単一のガーディアン記事にのみ帰属しており、他の主要ビジネス・テクノロジー系メディアからの裏付け報道がありません。
+   - 推奨フォローアップ: Bloomberg、Reuters (ロイター)、CNBC、WSJ (ウォールストリート・ジャーナル) のアーカイブを検索し、ディズニーランド顔認証導入に関する報道内容を確認し、導入範囲、段階的な導入タイムライン、およびディズニーの公式声明を検証してください。</p>
+</li>
+<li>
+<p><strong>[選択バイアス]</strong> 最近の Form 4 (役員株式売買報告) データでは、経営幹部によるオープンマーケットでの株式買却・売却は観察されていません。
+   - 草稿は Form 4 を検査していますが、2026 年 4 月 2 日 (報酬付与日) のみを検査し、過去 12 ヶ月間の Form 4 を体系的に検査して、経営幹部が売却、オープンマーケット購入、または Rule 10b5-1 計画 (事前決定型株売却契約) への参加を行ったかどうかを判断していません。
+   - 推奨フォローアップ: 2025 年 5 月から 2026 年 5 月までディズニー役員のすべての Form 4 届を取得し、取引形態別 (報酬付与、売却、購入、計画採択) に分類して、役員等による株式取引活動の完全な図景を提供してください。</p>
+</li>
+</ol>
+<h2 id="sources">出典一覧 (Sources)</h2>
+<p><em><code>信頼度</code> は確率ではなく、<strong>情報源の種類による粗いラベル</strong>です。読み方:</em></p>
+<ul>
+<li><em><strong>0.95</strong>: 規制当局への一次公式提出書類 (SEC 8-K / 10-K 等)</em></li>
+<li><em><strong>0.90</strong>: 一次資料で構造化データを含む (Form 4 XML 等)</em></li>
+<li><em><strong>0.85</strong>: 一次資料だが直接性がやや弱い (SC 13G 等の受動的開示)</em></li>
+<li><em><strong>0.65</strong>: 二次情報源 (報道記事、SNS・フォーラム投稿)</em></li>
+<li><em><strong>それ以下</strong>: より検証が必要な情報</em></li>
+</ul>
+<p><em>「この情報源が主張をどれだけ直接的に裏付けているか」の目安としてお使いください。</em></p>
+<ul>
+<li><a href="https://www.sec.gov/Archives/edgar/data/1744489/000110465924020136/tv0144-waltdisneycothe.htm">SEC SC 13G/A — DIS (2024-02-13)</a> — <code>sec_13d_g</code> (一次資料, 信頼度=0.85)</li>
+<li><a href="https://www.sec.gov/Archives/edgar/data/1744489/000108636424004870/us2546871060_012624.txt">SEC SC 13G — DIS (2024-01-26)</a> — <code>sec_13d_g</code> (一次資料, 信頼度=0.85)</li>
+<li><a href="https://reclaimthenet.org/disney-faces-5m-lawsuit-over-disneyland-facial-recognition">Disney Faces $5M Lawsuit over Disneyland Facial Recognition</a> — <code>hn_search</code> (SNS・フォーラム, 信頼度=0.65)</li>
+<li><a href="https://www.natesilver.net/p/disney-erased-fivethirtyeight">Disney erased FiveThirtyEight</a> — <code>hn_search</code> (SNS・フォーラム, 信頼度=0.65)</li>
+<li><a href="https://www.theguardian.com/us-news/2026/apr/28/disneyland-entrance-facial-recognition">Mickey Mouse is watching you: Disneyland deploys facial recognition</a> — <code>hn_search</code> (SNS・フォーラム, 信頼度=0.65)</li>
+<li><a href="https://www.manton.org/2026/05/05/disney-debt.html">Disney Debt</a> — <code>hn_search</code> (SNS・フォーラム, 信頼度=0.65)</li>
+<li><a href="https://www.sec.gov/Archives/edgar/data/1744489/000174448926000037/dis-20260328.htm">SEC 10-Q — DIS (2026-05-06)</a> — <code>sec_edgar</code> (一次資料, 信頼度=0.90)</li>
+<li><a href="https://www.sec.gov/Archives/edgar/data/1744489/000174448926000036/dis-20260506.htm">SEC 8-K — DIS (2026-05-06)</a> — <code>sec_edgar</code> (一次資料, 信頼度=0.95)</li>
+<li><a href="https://www.sec.gov/Archives/edgar/data/1744489/000162828026020172/dis-20260318.htm">SEC 8-K — DIS (2026-03-20)</a> — <code>sec_edgar</code> (一次資料, 信頼度=0.95)</li>
+<li><a href="https://www.sec.gov/Archives/edgar/data/1744489/000119312526088356/d116769d8k.htm">SEC 8-K — DIS (2026-03-03)</a> — <code>sec_edgar</code> (一次資料, 信頼度=0.95)</li>
+<li><a href="https://www.sec.gov/Archives/edgar/data/1744489/000174448926000025/dis-20260220.htm">SEC 8-K — DIS (2026-02-24)</a> — <code>sec_edgar</code> (一次資料, 信頼度=0.95)</li>
+<li><a href="https://www.sec.gov/Archives/edgar/data/1744489/000174448926000013/dis-20260122.htm">SEC DEF 14A — DIS (2026-01-22)</a> — <code>sec_edgar</code> (一次資料, 信頼度=0.80)</li>
+<li><a href="https://www.sec.gov/Archives/edgar/data/1744489/000162828026023334/xslF345X06/wk-form4_1775167325.xml">SEC 4 — DIS (2026-04-02) — LAGOMASINO MARIA ELENA</a> — <code>sec_form4</code> (一次資料, 信頼度=0.90)</li>
+<li><a href="https://www.sec.gov/Archives/edgar/data/1744489/000162828026023330/xslF345X06/wk-form4_1775167292.xml">SEC 4 — DIS (2026-04-02) — GORMAN JAMES P</a> — <code>sec_form4</code> (一次資料, 信頼度=0.90)</li>
+<li><a href="https://www.sec.gov/Archives/edgar/data/1744489/000162828026023329/xslF345X06/wk-form4_1775167285.xml">SEC 4 — DIS (2026-04-02) — Barra Mary T</a> — <code>sec_form4</code> (一次資料, 信頼度=0.90)</li>
+</ul>
+<p><em>本文中で直接引用されなかった参考情報が 26 件、調査中に収集されています (JSON 出力の <code>sources</code> フィールドに完全なリストがあります)。</em></p>
+<h2 id="_1">品質スコア内訳</h2>
+<p><strong>総合品質スコア: 65/100</strong> (中)</p>
+<table>
+<thead>
+<tr>
+<th>指標</th>
+<th>スコア</th>
+<th>重み</th>
+<th>説明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>open_challenges</td>
+<td>25/100</td>
+<td>0.15</td>
+<td>独立レビューが残した未決着論点 5 件 (少ないほど良い)。式: max(0, 100 - count*15)</td>
+</tr>
+<tr>
+<td>single_source</td>
+<td>0/100</td>
+<td>0.05</td>
+<td>1 ソースしか持たない findings の割合 100.0% (低いほど良い)。式: (1-ratio)*100</td>
+</tr>
+<tr>
+<td>adversary_concern</td>
+<td>60/100</td>
+<td>0.2</td>
+<td>独立レビュー総合判定 = minor_concerns (clean=100 / minor=60 / major=20 / unknown=50)</td>
+</tr>
+<tr>
+<td>cited_url</td>
+<td>100/100</td>
+<td>0.15</td>
+<td>draft 中で literal 引用された URL の絶対数 15 件 (10 件以上で満点、収集 41 件のうち)</td>
+</tr>
+<tr>
+<td>staleness</td>
+<td>89/100</td>
+<td>0.1</td>
+<td>最古ソースからの経過 22 日 (新しいほど良い)。式: max(0, 100 - days*0.5)</td>
+</tr>
+<tr>
+<td>diversity</td>
+<td>50/100</td>
+<td>0.2</td>
+<td>利用された collector の異種数 5/10 (多いほどクロスソース性が高い)</td>
+</tr>
+<tr>
+<td>correction_signal</td>
+<td>100/100</td>
+<td>0.1</td>
+<td>訂正報告書で検出された最大規模 = none (none/trivial=高評価、major=要警戒)</td>
+</tr>
+<tr>
+<td>translation_check</td>
+<td>100/100</td>
+<td>0.05</td>
+<td>翻訳未実行 (英語版のみ) → 100 (penalty なし)</td>
+</tr>
+</tbody>
+</table>
+<p><em>算出アルゴリズム: 重み付き合計 (各 0-100): open_challenges<em>0.15, single_source</em>0.05, adversary_concern<em>0.2, cited_url</em>0.15, staleness<em>0.1, diversity</em>0.2, correction_signal<em>0.1, translation_check</em>0.05. band: high (&gt;= 80) / medium (50-79) / low (&lt; 50).</em></p>
+<h2 id="_2">用語集</h2>
+<ul>
+<li><strong>10-Q</strong>: 四半期報告書。通常 3 ヶ月ごと (Q1, Q2, Q3) に提出される</li>
+<li><strong>8-K</strong>: 重要事象が発生した際に随時提出される臨時報告書。経営陣の交代、訴訟、規制処分、買収等の重大なイベント開示に使用</li>
+<li><strong>Form 4</strong>: 役員・取締役・10% 以上保有株主が株式の売買を行った際に提出する開示書類。インサイダー取引の監視に用いられる</li>
+<li><strong>DEF 14A</strong>: 株主総会の議題および委任状勧誘書</li>
+<li><strong>Rule 10b5-1</strong>: 経営陣が事前に売却計画を SEC に登録することでインサイダー取引疑惑を回避する制度</li>
+</ul>
+<hr>
+<h2 id="_3">翻訳チェック結果</h2>
+<p><em>本セクションは翻訳の品質を<strong>自動チェック</strong>した結果です。<strong>修正はせず</strong>、気になる箇所を flag するだけの設計です (最終判断は人)。「機械チェック」は単純な集合差分で正規表現ベース — false positive (英語の <code>January 25, 2026</code> と日本語の <code>2026 年 1 月 25 日</code> の対応取りこぼし等) を含みます。「LLM レビュアー」は Haiku 4.5 が独立に英日を読み比べた所見で、こちらも完璧ではありません。</em></p>
+<h3 id="_4">機械チェック</h3>
+<p><em>見ている対象: URL / 年号 (4 桁) / 日付 (ISO ↔ 日本語形式変換後) / 通貨表現の集合差分。<strong>「英版のみ」</strong>は原文にあって日本語訳から消えた要素、<strong>「日版のみ」</strong>は逆 (訳文側に追加された)。</em></p>
+<p><strong>判定</strong>: <span class="check-badge check-minor">△ 9 件の不一致</span> — 下記を確認してください。ただし、英語の自然言語日付 (<code>January 25, 2026</code>) と日本語形式 (<code>2026 年 1 月 25 日</code>) の対応取りこぼし等は false positive (誤検出) です。</p>
+<ul>
+<li>URL (日版のみ — 訳文に追加された): <a href="https://www.sec.gov/Archives/edgar/data/1744489/000110465924020136/tv0144-waltdisneycothe.htm、,">https://www.sec.gov/Archives/edgar/data/1744489/000110465924020136/tv0144-waltdisneycothe.htm、,</a> <a href="https://www.sec.gov/Archives/edgar/data/1744489/000162828026020172/dis-20260318.htm、,">https://www.sec.gov/Archives/edgar/data/1744489/000162828026020172/dis-20260318.htm、,</a> <a href="https://www.sec.gov/Archives/edgar/data/1744489/000162828026023330/xslF345X06/wk-form4_1775167292.xml、,">https://www.sec.gov/Archives/edgar/data/1744489/000162828026023330/xslF345X06/wk-form4_1775167292.xml、,</a> <a href="https://www.sec.gov/Archives/edgar/data/1744489/000162828026023334/xslF345X06/wk-form4_1775167325.xml、,">https://www.sec.gov/Archives/edgar/data/1744489/000162828026023334/xslF345X06/wk-form4_1775167325.xml、,</a> <a href="https://www.sec.gov/Archives/edgar/data/1744489/000174448926000025/dis-20260220.htm、,">https://www.sec.gov/Archives/edgar/data/1744489/000174448926000025/dis-20260220.htm、,</a> <a href="https://www.theguardian.com/us-news/2026/apr/28/disneyland-entrance-facial-recognition、">https://www.theguardian.com/us-news/2026/apr/28/disneyland-entrance-facial-recognition、</a></li>
+<li>日付 (日版のみ — 訳文に追加された): 2026-02-20, 2026-04-28, 2026-05-05</li>
+</ul>
+<h3 id="llm">LLM レビュアー所見</h3>
+<p><em>見ている対象: 数値・日付・固有名詞のずれ、重要情報の欠落、原文にない追加 (ハルシネーション)、意味の歪み、引用 URL の改変。自然な意訳や用語解説の付加は対象外。</em></p>
+<p><strong>判定</strong>: ✅ 問題なし — 個別の指摘なし、原文と訳文は実質一致。そのまま読んで構いません。</p>
+<p><em>レビュアーの説明: The Japanese translation maintains faithful correspondence with the English original across all critical dimensions: numerical values (equity grant shares, lawsuit amount, upvote count, quality scores), dates (all calendar dates and filing dates match), proper nouns (all executive names, organization names, and form types are correctly rendered), and URLs. No content is missing, hallucinated, or materially distorted. The translation demonstrates appropriate localization of terminology while preserving the original structure and claims.</em></p>
+<p>(個別の指摘なし)</p>
+<div class="osint-footer">Generated by osint engine — Investigator + Adversary + Translator + Translation Reviewer</div>
+</main>
+</body>
+</html>
