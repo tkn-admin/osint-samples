@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OSINT レポート — サウスウェスト航空 (LUV)</title>
+<style>
+
+:root {
+  --bg: #fafaf7;
+  --panel: #ffffff;
+  --ink: #1a1a1a;
+  --ink-soft: #4a4a4a;
+  --ink-mute: #8a8a8a;
+  --accent: #2563eb;
+  --accent-soft: #dbeafe;
+  --rule: #e5e5e0;
+  --code-bg: #f3f3ee;
+  --clean: #16a34a;
+  --minor: #d97706;
+  --major: #dc2626;
+  --neutral: #6b7280;
+  --challenge-bg: #fef9e7;
+  --challenge-border: #d97706;
+  --max-width: 820px;
+}
+
+* { box-sizing: border-box; }
+html { font-size: 16px; -webkit-text-size-adjust: 100%; }
+body {
+  font-family: "Noto Sans JP", "Yu Gothic", "Hiragino Sans", "Hiragino Kaku Gothic ProN",
+               -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+  margin: 0;
+  padding: 0;
+  line-height: 1.85;
+  font-feature-settings: "palt";
+}
+
+main {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: 48px 32px 96px;
+  background: var(--panel);
+  min-height: 100vh;
+  box-shadow: 0 0 40px rgba(0,0,0,0.04);
+}
+
+h1 {
+  font-size: 2.1rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  margin: 0 0 8px 0;
+  padding-bottom: 12px;
+  border-bottom: 3px solid var(--ink);
+}
+
+h2 {
+  font-size: 1.4rem;
+  font-weight: 700;
+  margin: 48px 0 16px 0;
+  padding-left: 14px;
+  border-left: 5px solid var(--accent);
+  letter-spacing: 0.02em;
+}
+
+h3 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin: 28px 0 12px 0;
+  color: var(--ink);
+}
+
+p { margin: 12px 0; }
+
+a {
+  color: var(--accent);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: border-color 0.15s;
+}
+a:hover { border-bottom-color: var(--accent); }
+
+ul, ol {
+  padding-left: 1.6em;
+  margin: 12px 0;
+}
+li { margin: 6px 0; }
+li > ul, li > ol { margin: 4px 0; }
+
+/* Meta header (1st emphasis line) */
+h1 + p > em:first-child,
+h1 + p em:first-child {
+  display: inline-block;
+  color: var(--ink-mute);
+  font-style: normal;
+  font-size: 0.9rem;
+  letter-spacing: 0.02em;
+}
+
+em {
+  color: var(--ink-soft);
+  font-style: normal;
+}
+
+strong { font-weight: 700; }
+
+code {
+  background: var(--code-bg);
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 0.9em;
+  font-family: "JetBrains Mono", "Cascadia Code", Consolas, monospace;
+}
+
+pre {
+  background: var(--code-bg);
+  padding: 16px;
+  border-radius: 6px;
+  overflow-x: auto;
+}
+pre > code {
+  background: none;
+  padding: 0;
+}
+
+blockquote {
+  margin: 16px 0;
+  padding: 12px 18px;
+  border-left: 4px solid var(--accent-soft);
+  background: rgba(219, 234, 254, 0.3);
+  color: var(--ink-soft);
+}
+
+hr {
+  border: none;
+  height: 1px;
+  background: var(--rule);
+  margin: 40px 0;
+}
+
+/* Verdict badges */
+.verdict-badge, .check-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  vertical-align: middle;
+}
+.verdict-clean,  .check-clean  { background: #dcfce7; color: var(--clean); }
+.verdict-minor,  .check-minor  { background: #fef3c7; color: var(--minor); }
+.verdict-major,  .check-major  { background: #fee2e2; color: var(--major); }
+.verdict-neutral               { background: #f3f4f6; color: var(--neutral); }
+
+/* Quality score badges (Phase 3.5 D-step) */
+.quality-badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-weight: 600;
+  font-size: 0.92rem;
+  margin-left: 6px;
+  vertical-align: middle;
+  letter-spacing: 0.02em;
+}
+.quality-high    { background: #d1fae5; color: #065f46; border: 1px solid #16a34a; }
+.quality-medium  { background: #fef3c7; color: #92400e; border: 1px solid #d97706; }
+.quality-low     { background: #fee2e2; color: #991b1b; border: 1px solid #dc2626; }
+.quality-neutral { background: #f1f5f9; color: #475569; border: 1px solid #94a3b8; }
+.badge-icon {
+  display: inline-block;
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  background: currentColor;
+  color: white;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 16px;
+  text-align: center;
+}
+
+/* Open Challenges section (h2 directly followed by paragraph + ol) */
+h2:has(+ em),
+h2:has(+ p > em:only-child) {
+  margin-top: 36px;
+}
+
+/* Highlight 「反論者の未決着論点」「Open Challenges」section */
+h2 + p > em:only-child {
+  display: block;
+  background: var(--challenge-bg);
+  border-left: 4px solid var(--challenge-border);
+  padding: 12px 16px;
+  border-radius: 0 4px 4px 0;
+  margin: 16px 0 20px 0;
+  font-style: normal;
+  color: var(--ink);
+}
+
+/* Source list (collector name in code) */
+ul li code {
+  font-size: 0.82em;
+}
+
+/* Print styling (PDF export friendly) */
+@media print {
+  body { background: white; }
+  main { box-shadow: none; max-width: none; padding: 24px; }
+  h1 { page-break-before: avoid; }
+  h2 { page-break-after: avoid; }
+  a { color: var(--ink); }
+  .verdict-badge, .check-badge, .quality-badge { border: 1px solid currentColor; }
+}
+
+/* Header note (sub-meta after title) */
+main > p:nth-of-type(1) {
+  font-size: 0.9rem;
+  color: var(--ink-mute);
+  margin-bottom: 4px;
+}
+main > p:nth-of-type(2) {
+  font-size: 0.88rem;
+  color: var(--ink-soft);
+  background: #f7f7f1;
+  padding: 12px 16px;
+  border-radius: 6px;
+  border-left: 3px solid var(--neutral);
+}
+
+/* Footer mini-credit (auto-injected) */
+.osint-footer {
+  margin-top: 64px;
+  padding-top: 20px;
+  border-top: 1px solid var(--rule);
+  color: var(--ink-mute);
+  font-size: 0.78rem;
+  text-align: center;
+}
+
+</style>
+</head>
+<body>
+<main>
+<h1 id="osint-luv">OSINT レポート: LUV</h1>
+<p><em>ドメイン: <code>financial</code> · 生成日時: 2026-05-26T07:28:54.989291+00:00 · 独立レビューの判定: <span class="verdict-badge verdict-minor"><span class="badge-icon">△</span>軽微な懸念あり</span> · 品質スコア: <span class="quality-badge quality-high">品質 81/100 (高)</span></em></p>
+<p><em>独立レビューの判定の読み方: <strong>問題なし</strong> = 未決着の指摘なし。<strong>軽微な懸念あり</strong> = 1〜3 件の小〜中程度の指摘あり、注意書きを添えれば使える。<strong>重要な懸念あり</strong> = 主要な主張のうち少なくとも 1 件が単一ソース依存・利害相反・反証情報あり等で、利用前の確認が必要。</em></p>
+<p><em>品質スコアの読み方: 8 指標 (独立レビュー判定 / 単一ソース率 / 引用率 / 鮮度 / クロスソース性 / 訂正シグナル / 翻訳整合性 / 未決着論点数) の重み付き合計、0〜100 点。<strong>高 (80 以上)</strong> = 主要主張が複数ソースで裏付け、新鮮、訂正シグナルなし。<strong>中 (50〜79)</strong> = 一部に単一ソース依存・古さ・訂正フラグあり、判断材料として使えるが要確認。<strong>低 (50 未満)</strong> = 重要な裏付け不足、別途調査推奨。算出アルゴリズムは末尾の Quality 内訳を参照。</em></p>
+<h2 id="top-line-summary">要約 (Top-line summary)</h2>
+<p>サウスウェスト航空は米国航空業界史上最も注目されたアクティビスト (物言う株主) キャンペーンの対象となっており、エリオット・インベストメント・マネジメント (約 11% の保有株) が 2024 年中盤に CEO およびチェアマンの辞任を公開で要求した。同社は買収防衛策 (ポイズン・ピル)、取締役会の刷新、経営の抜本的な改革で対抗し、署名商品であった無料手荷物政策を廃止した。2026 年の株主総会と新たな役員のストック・オプション受取から、同社は現在、大きく変わったガバナンス体制と経営陣のもとで運営されていることが窺われる。</p>
+<h2 id="_1">主な調査結果</h2>
+<ul>
+<li>
+<p><strong>エリオット大量取得届 (初回提出、2024 年 8 月 5 日)</strong> — エリオット・インベストメント・マネジメント・エル・ピーがサウスウェスト航空の約 11% の主動的保有株 (大量取得届) を提出し、段階的な要求書の送付を伴った。詳細: 大量取得届は SEC に正式に登録された文書で、5% を超える株式を保有する投資家が経営関与の意思を示す場合に提出される。出典: sec_13d_g · <a href="https://www.sec.gov/Archives/edgar/data/92380/000090266424004970/p24-2469sc13d.htm">https://www.sec.gov/Archives/edgar/data/92380/000090266424004970/p24-2469sc13d.htm</a></p>
+</li>
+<li>
+<p><strong>エリオット要求書第 1 号 (2024 年 6 月 10 日)</strong> — エリオット・インベストメント・マネジメントがサウスウェスト航空の取締役会に宛てた書簡では、(1) CEO ロバート・ジョーダンとチェアマン ゲーリー・ケリーの辞任、(2) 航空業界の経験者による外部人材の経営陣への登用、(3) 経営戦略の抜本的改革を要求した。エリオットは「サウスウェストには新しいリーダーシップが必要である」と述べ、3 年間で 50% を超える株価下落と 2022 年 12 月の運航混乱で責任を追及しなかったことを根拠とした。出典: sec_13d_exhibits · <a href="https://www.sec.gov/Archives/edgar/data/92380/000090266424004970/exhibit991.htm">https://www.sec.gov/Archives/edgar/data/92380/000090266424004970/exhibit991.htm</a></p>
+</li>
+<li>
+<p><strong>エリオット再要求書第 2 号 (2024 年 7 月 8 日)</strong> — 追加書簡では「同じ取締役会と経営陣によるリーダーシップの継続は到底許容されない」と述べ、連続 8 四半期の利益予想下方修正と業界同業他社を大きく下回る売上成長を指摘した。エリオットはポイズン・ピル (株主権利計画) の採用を経営陣による自己防衛行為と直接批判し、株主提案 (プロキシ・ファイト) の準備段階に入ったことを示唆した。出典: sec_13d_exhibits · <a href="https://www.sec.gov/Archives/edgar/data/92380/000090266424004970/exhibit992.htm">https://www.sec.gov/Archives/edgar/data/92380/000090266424004970/exhibit992.htm</a></p>
+</li>
+<li>
+<p><strong>大量取得届の修正書類 6 件 (2024 年 8 月～10 月)</strong> — エリオットは 2024 年 8 月 13 日から 10 月 30 日にかけて大量取得届を 6 度修正し、株主提案期間を通じた継続的な交渉および/または株式保有の変動を示した。詳細: このような頻繁な修正は、エリオットが経営陣との交渉を進行中であるか、段階的に持ち株を増減させていることを示唆する。出典: sec_13d_g · <a href="https://www.sec.gov/Archives/edgar/data/92380/000090266424005096/p24-2596sc13da.htm、https://www.sec.gov/Archives/edgar/data/92380/000090266424005259/p24-2662sc13da.htm、https://www.sec.gov/Archives/edgar/data/92380/000090266424005604/p24-2831sc13da.htm、https://www.sec.gov/Archives/edgar/data/92380/000090266424005829/p24-2934sc13da.htm、https://www.sec.gov/Archives/edgar/data/92380/000090266424005965/p24-3063sc13da.htm、https://www.sec.gov/Archives/edgar/data/92380/000090266424006082/p24-3113sc13da.htm">https://www.sec.gov/Archives/edgar/data/92380/000090266424005096/p24-2596sc13da.htm、https://www.sec.gov/Archives/edgar/data/92380/000090266424005259/p24-2662sc13da.htm、https://www.sec.gov/Archives/edgar/data/92380/000090266424005604/p24-2831sc13da.htm、https://www.sec.gov/Archives/edgar/data/92380/000090266424005829/p24-2934sc13da.htm、https://www.sec.gov/Archives/edgar/data/92380/000090266424005965/p24-3063sc13da.htm、https://www.sec.gov/Archives/edgar/data/92380/000090266424006082/p24-3113sc13da.htm</a></p>
+</li>
+<li>
+<p><strong>CEO および COO の大型ストック・オプション受取 (2026 年 3 月)</strong> — CEO ロバート・ジョーダンは 2026 年 3 月 17 日に 9 万 2,867 株のストック・オプション受取 (報酬 = 授与) を記録し、COO アンドリュー・ウォーターソンも 3 万 5,092 株を受け取った。同時に CFO トム・ドクシーは 1 万 1,447 株を税務控除で処分 (通常の税務上の源泉徴収イベント) した。これらはエリオット後の新しいガバナンス体制下での継続的な株式インセンティブを示す。出典: sec_form4 · <a href="https://www.sec.gov/Archives/edgar/data/92380/000009238026000032/xslF345X05/wk-form4_1773785921.xml、https://www.sec.gov/Archives/edgar/data/92380/000009238026000028/xslF345X05/wk-form4_1773785633.xml、https://www.sec.gov/Archives/edgar/data/92380/000009238026000035/xslF345X05/wk-form4_1774387504.xml">https://www.sec.gov/Archives/edgar/data/92380/000009238026000032/xslF345X05/wk-form4_1773785921.xml、https://www.sec.gov/Archives/edgar/data/92380/000009238026000028/xslF345X05/wk-form4_1773785633.xml、https://www.sec.gov/Archives/edgar/data/92380/000009238026000035/xslF345X05/wk-form4_1774387504.xml</a></p>
+</li>
+<li>
+<p><strong>エリオット後の取締役会刷新 (2026 年 5 月株主総会)</strong> — サラ・ファインバーグ、ピエール・ブレベル、ロバート・フォルナロ、デービッド・グリッセン、デービッド・ヘス、クリストファー・レイノルズ、パトリシア・ワトソン、リサ・アセルトン、ダグラス・ブルックスを含む 9 名の取締役がそれぞれ 2026 年 5 月 11 日に 4,108 株の同一額のストック・オプションを受け取った。これは 2026 年 5 月 7 日の年次株主総会に続く標準的な取締役報酬である。詳細: 新任取締役の名前と授与数は SEC Form 4 (役員株式取引報告) に記載されており、取締役会の構成が変わったことを確認できる。出典: sec_edgar · <a href="https://www.sec.gov/Archives/edgar/data/92380/000119312526127237/d121727ddef14a.htm、sec_form4">https://www.sec.gov/Archives/edgar/data/92380/000119312526127237/d121727ddef14a.htm、sec_form4</a> · <a href="https://www.sec.gov/Archives/edgar/data/92380/000009238026000068/xslF345X06/wk-form4_1778533476.xml、https://www.sec.gov/Archives/edgar/data/92380/000009238026000064/xslF345X06/wk-form4_1778533318.xml">https://www.sec.gov/Archives/edgar/data/92380/000009238026000068/xslF345X06/wk-form4_1778533476.xml、https://www.sec.gov/Archives/edgar/data/92380/000009238026000064/xslF345X06/wk-form4_1778533318.xml</a></p>
+</li>
+<li>
+<p><strong>年次決算書 (2025 年度) および四半期報告書 (2026 年 Q1) の提出</strong> — サウスウェスト航空は 2025 年 12 月 31 日締めの年次決算書を 2026 年 2 月 5 日に、2026 年 3 月 31 日締めの四半期報告書を 2026 年 4 月 23 日に提出した。2026 年 4 月 22 日付の臨時開示書類 (8-K) にはおそらく決算発表またはその他の重要な発表が含まれている。出典: sec_edgar · <a href="https://www.sec.gov/Archives/edgar/data/92380/000009238026000004/luv-20251231.htm、https://www.sec.gov/Archives/edgar/data/92380/000009238026000047/luv-20260331.htm、https://www.sec.gov/Archives/edgar/data/92380/000009238026000044/luv-20260422.htm">https://www.sec.gov/Archives/edgar/data/92380/000009238026000004/luv-20251231.htm、https://www.sec.gov/Archives/edgar/data/92380/000009238026000047/luv-20260331.htm、https://www.sec.gov/Archives/edgar/data/92380/000009238026000044/luv-20260422.htm</a></p>
+</li>
+<li>
+<p><strong>署名商品である無料手荷物政策の廃止</strong> — 2 つの無料預け荷物が特徴だったサウスウェスト航空は、2025 年中盤に初回預け荷物に 35 ドルの料金を導入し、ブランド戦略の大きな転換を示した。これに加えて同社はモバイル・バッテリーの制限と大柄乗客向けのポリシー変更を実施し、サウスウェスト航空を含む複数の航空会社は乗客保護の規制緩和を求める業界ロビー活動に参加したと報じられている。詳細: この手荷物料金化は顧客からの反発を招き、同社の「顧客重視」ブランドイメージに矛盾する動きとして認識されている。出典: news_rss · <a href="https://www.wsj.com/business/airlines/southwest-airlines-sets-fee-for-first-checked-bag-at-35-767d6832、https://www.nytimes.com/2025/05/27/travel/southwest-airlines-baggage-fees.html、https://www.travelandtourworld.com/news/article/american-joins-delta-southwest-united-and-other-us-airlines-push-to-strip-away-travelers-rights-and-add-more-fees-by-rolling-back-key-protections-in-new-deregulation-move/">https://www.wsj.com/business/airlines/southwest-airlines-sets-fee-for-first-checked-bag-at-35-767d6832、https://www.nytimes.com/2025/05/27/travel/southwest-airlines-baggage-fees.html、https://www.travelandtourworld.com/news/article/american-joins-delta-southwest-united-and-other-us-airlines-push-to-strip-away-travelers-rights-and-add-more-fees-by-rolling-back-key-protections-in-new-deregulation-move/</a></p>
+</li>
+<li>
+<p><strong>ヒューマノイドロボットの搭乗禁止 (運航ポリシー)</strong> — サウスウェスト航空は新たな運航ポリシーとしてヒューマノイドロボットの機内への持ち込み・搭乗を禁止し、新興の AI 搭載ハードウェアに関連する規制と安全上の懸念を反映した措置を取った。出典: hn_search · <a href="https://ktla.com/news/nationworld/southwest-airlines-humanoid-robot-ban/">https://ktla.com/news/nationworld/southwest-airlines-humanoid-robot-ban/</a></p>
+</li>
+</ul>
+<h2 id="open-threads-worth-deeper-investigation">深掘り余地のある論点 (Open Threads worth deeper investigation)</h2>
+<ul>
+<li>
+<p><strong>エリオットの現在の保有株率</strong>: 最新の大量取得届修正は 2024 年 10 月 30 日である。その後の大量取得届や機関投資家保有報告書がなければ、エリオットが約 11% の株式を維持、減少、または売却したかは不明である。株主提案の解決が関わっているため重要性が高い。</p>
+</li>
+<li>
+<p><strong>2026 年 Q1 の具体的な財務指標</strong>: 2026 年 4 月 23 日に提出された四半期報告書には売上高、単位当たりコスト (除外項目)、営業利益、乗客あたり売上高など、エリオット主導の経営改革が測定可能な財務改善をもたらしたかを明らかにする数値が含まれている。本調査ではこれらの数字を直接抽出していない。</p>
+</li>
+<li>
+<p><strong>2025 年度の通期決算</strong>: 2026 年 2 月 5 日に提出された年次決算書に通期結果が含まれている。エリオットは 2024 年中盤時点で連続 8 四半期の利益予想下方修正を指摘していたが、2025 年度がこの傾向の反転を示したかどうかは評価する価値がある。</p>
+</li>
+<li>
+<p><strong>CEO ロバート・ジョーダンの身分</strong>: エリオットは 2024 年 6 月にジョーダンの辞任を要求した。ジョーダンが最終的に退任したのか、それとも CEO として生き残ったのかは確認されていない。2026 年 3 月の Form 4 では彼は CEO・プレジデントのタイトルで株式受取を記録しており、在任を示唆しているが、プロキシと経営陣変更に関する 8-K で検証する必要がある。</p>
+</li>
+<li>
+<p><strong>2026 年 5 月の年次株主総会の結果</strong>: 5 月 7 日の年次総会の 1 日後である 5 月 11 日に 8-K が提出されている。これはおそらく投票結果を含み、エリオット推薦候補の取締役が選出されたかどうか、および支持の幅を示しているが、本調査では確認していない。</p>
+</li>
+<li>
+<p><strong>手荷物料金による売上への影響</strong>: サウスウェスト航空の「バッグは無料」ポリシーはかつての顧客獲得の中核ドライバーであった。35 ドル料金導入による売上増 (対 顧客離脱コスト) を定量化するには四半期報告書のセグメント分析が必要である。</p>
+</li>
+</ul>
+<h2 id="open-challenges">独立レビューで残った論点 (Open Challenges)</h2>
+<p><em>独立レビューが本レポートの根拠の弱さを指摘している。以下は読者が当レポートに基づいて判断する前に考慮すべき未決着の論点である。</em></p>
+<p><em>コア・アクティビスト・ナラティブと SEC 書類は一次文書で十分に根拠づけられているが、運用上の変更 (手荷物料金、携帯バッテリー制限、ロボット禁止) および 1 つの財務指標に関するいくつかの裏付けは単一の二次情報源に依存するか、企業の一次開示の裏付けを欠いており、株式授与に関する因果説明は証拠を過度に解釈している。本レポートは公開前にこれらの限定を明記すべきであり、調査者は 10-K と 10-Q から実際の財務結果を抽出し、エリオットの要求が測定可能な改善をもたらしたかを評価することを優先すべきである。</em></p>
+<ol>
+<li>
+<p><strong>[単一ソース依存]</strong> サウスウェスト航空は 2 つの無料預け荷物が特徴だったが、2025 年中盤に初回預け荷物に 35 ドルの料金を導入し、ブランド戦略の大きな転換を示した。
+   - 問題点: 手荷物料金の主張は 2 つのニュース報道 (ウォール・ストリート・ジャーナル、ニューヨーク・タイムズ) とトラベル業界ニュース集約サイト (手荷物料金を別の規制緩和ロビー請求と混同) に依存しており、35 ドルの料金の時期、金額、施行日を確認する企業の一次開示 (臨時開示書類、四半期報告書、決算説明会記録、プレスリリース) が引用されていない。
+   - 推奨フォローアップ: 2025 年 7 月 24 日または 10 月 23 日に提出された四半期報告書で手荷物料金売上または顧客影響の開示を確認し、SEC EDGAR で 2025 年中盤の 8-K またはプレスリリース発表を検索する。</p>
+</li>
+<li>
+<p><strong>[選択バイアス]</strong> さらに同社はモバイル・バッテリーの制限と大柄乗客向けのポリシー変更を実施し、サウスウェスト航空を含む複数の航空会社は乗客保護の規制緩和を求める業界ロビー活動に参加したと報じられている。
+   - 問題点:携帯バッテリーと大柄乗客ポリシーはハッカー・ニューズのソーシャル・ポストのみで引用され、規制緩和ロビー請求は一次情報源リンクを持たないトラベル業界ニュース集約サイトのみで引用されており、同社の内部ポリシーと幅広い業界ロビー活動を混同しながら、サウスウェスト航空自身の公開声明または SEC 開示に基づく立場を明確にしていない。
+   - 推奨フォローアップ: SEC 書類でサウスウェストのプレスリリース、8-K、または投資家説明会での携帯バッテリーまたは大柄乗客ポリシー変更への言及を検索し、サウスウェスト航空が規制緩和ロビー活動を公式に支持したかどうかを SEC 開示または公式声明で検証する。</p>
+</li>
+<li>
+<p><strong>[単一ソース依存]</strong> サウスウェスト航空はヒューマノイドロボットの機内への持ち込みを禁止し、新興の AI 搭載ハードウェアに関連する規制と安全上の懸念を反映した新たな運航ポリシー上の変更である。
+   - 問題点: この主張は KTLA ニュース報道 (ハッカー・ニューズ経由、二次および社会メディア情報源) のみで根拠づけられており、禁止措置またはサウスウェスト航空の stated rationale を確認する企業の一次開示 (プレスリリース、8-K、ポリシー文書、決算説明会) がない。
+   - 推奨フォローアップ: サウスウェスト航空の公式プレスセンターまたは SEC 書類でヒューマノイドロボット禁止の発表を検索し、KTLA 報道にサウスウェスト航空の引用またはポリシー・リンクが含まれているかを確認する。</p>
+</li>
+<li>
+<p><strong>[データの鮮度不足]</strong> エリオット・インベストメント・マネジメント・エル・ピーがサウスウェスト航空の約 11% の主動的保有株を開示し、段階的な要求書を伴った。
+   - 問題点: 引用された最新の大量取得届修正は 2024 年 10 月 30 日であり、本レポートはその後の書類がなければエリオットの現在の保有株率が不明であることを認めているが、要旨は「≈11% stake」と現在形を使用し、条件なく記述している。
+   - 推奨フォローアップ: SEC EDGAR で 2024 年 10 月 30 日以降のエリオットの大量取得届、修正、または機関投資家保有報告書を確認するか、エリオットの最新の四半期機関投資家保有報告書で LUV 現在ポジションを確認する。</p>
+</li>
+<li>
+<p><strong>[因果関係の飛躍]</strong> CEO ロバート・ジョーダンは 2026 年 3 月 17 日に 9 万 2,867 株のストック・オプション受取 (報酬 = 授与) を記録し、COO アンドリュー・ウォーターソンも 3 万 5,092 株を受け取った。これらはエリオット後の新しいガバナンス体制下での継続的な株式インセンティブを示す。
+   - 問題点: 本レポートは 2026 年 3 月の株式授与が「エリオット後のガバナンス体制下での継続的な株式インセンティブを示す」と主張しているが、Form 4 はこれらの授与が取締役会によってエリオット後に新規承認されたのか、事前の計画の一部か、エリオットとの交渉の結果として支給されたのかを開示していない。エリオットの活動とこれらの特定の授与との因果関係は確立されていない。
+   - 推奨フォローアップ: 2026 年 DEF 14A プロキシと 2025 年度年次決算書の報酬論考セクションで授与条件、承認日、およびエリオット主導の報酬計画変更への言及を確認する。</p>
+</li>
+<li>
+<p><strong>[選択バイアス]</strong> エリオット CEO・チェアマン辞任要求書 (2024 年 6 月 10 日) は「サウスウェストには新しいリーダーシップが必要である」と述べ、3 年間で 50% を超える株価下落を根拠とした。
+   - 問題点: 50% を超える株価下落の数字はエリオットの要求書 (変化を強制するための経済的インセンティブを持つ自己利害関係のあるアクティビスト投資家) からのみ引用され、金融データプロバイダー (ブルームバーグ、S&amp;P キャピタル IQ、ヤフー・ファイナンス歴史データ) からの独立した検証が引用されていない。
+   - 推奨フォローアップ: 金融データプロバイダーまたは SEC 書類の歴史的価格データを使用して 2024 年 6 月から過去 3 年間 (2021 年 6 月へ遡る) の株価下落を検証する。</p>
+</li>
+</ol>
+<h2 id="sources">出典一覧 (Sources)</h2>
+<p><em><code>信頼度</code> は確率ではなく、<strong>情報源の種類による粗いラベル</strong>です。読み方:</em></p>
+<ul>
+<li><em><strong>0.95</strong>: 規制当局への一次公式提出書類 (SEC 8-K / 10-K 等)</em></li>
+<li><em><strong>0.90</strong>: 一次資料で構造化データを含む (Form 4 XML 等)</em></li>
+<li><em><strong>0.85</strong>: 一次資料だが直接性がやや弱い (SC 13G 等の受動的開示)</em></li>
+<li><em><strong>0.65</strong>: 二次情報源 (報道記事、SNS・フォーラム投稿)</em></li>
+<li><em><strong>それ以下</strong>: より検証が必要な情報</em></li>
+</ul>
+<p><em>「この情報源が主張をどれだけ直接的に裏付けているか」の目安としてお使いください。</em></p>
+<ul>
+<li><a href="https://www.sec.gov/Archives/edgar/data/92380/000090266424006082/p24-3113sc13da.htm">SEC SC 13D/A — LUV (2024-10-30)</a> — <code>sec_13d_g</code> (一次資料, 信頼度=0.95)</li>
+<li><a href="https://www.sec.gov/Archives/edgar/data/92380/000090266424005965/p24-3063sc13da.htm">SEC SC 13D/A — LUV (2024-10-24)</a> — <code>sec_13d_g</code> (一次資料, 信頼度=0.95)</li>
+<li><a href="https://www.sec.gov/Archives/edgar/data/92380/000090266424005829/p24-2934sc13da.htm">SEC SC 13D/A — LUV (2024-10-15)</a> — <code>sec_13d_g</code> (一次資料, 信頼度=0.95)</li>
+<li><a href="https://www.sec.gov/Archives/edgar/data/92380/000090266424005604/p24-2831sc13da.htm">SEC SC 13D/A — LUV (2024-09-24)</a> — <code>sec_13d_g</code> (一次資料, 信頼度=0.95)</li>
+<li><a href="https://www.sec.gov/Archives/edgar/data/92380/000090266424005259/p24-2662sc13da.htm">SEC SC 13D/A — LUV (2024-08-26)</a> — <code>sec_13d_g</code> (一次資料, 信頼度=0.95)</li>
+<li><a href="https://www.sec.gov/Archives/edgar/data/92380/000090266424005096/p24-2596sc13da.htm">SEC SC 13D/A — LUV (2024-08-13)</a> — <code>sec_13d_g</code> (一次資料, 信頼度=0.95)</li>
+<li><a href="https://www.sec.gov/Archives/edgar/data/92380/000090266424004970/p24-2469sc13d.htm">SEC SC 13D — LUV (2024-08-05)</a> — <code>sec_13d_g</code> (一次資料, 信頼度=0.95)</li>
+<li><a href="https://www.sec.gov/Archives/edgar/data/92380/000009238026000047/luv-20260331.htm">SEC 10-Q — LUV (2026-04-23)</a> — <code>sec_edgar</code> (一次資料, 信頼度=0.90)</li>
+<li><a href="https://www.sec.gov/Archives/edgar/data/92380/000009238026000044/luv-20260422.htm">SEC 8-K — LUV (2026-04-22)</a> — <code>sec_edgar</code> (一次資料, 信頼度=0.95)</li>
+<li><a href="https://www.sec.gov/Archives/edgar/data/92380/000119312526127237/d121727ddef14a.htm">SEC DEF 14A — LUV (2026-03-27)</a> — <code>sec_edgar</code> (一次資料, 信頼度=0.80)</li>
+<li><a href="https://www.sec.gov/Archives/edgar/data/92380/000009238026000004/luv-20251231.htm">SEC 10-K — LUV (2026-02-05)</a> — <code>sec_edgar</code> (一次資料, 信頼度=0.95)</li>
+<li><a href="https://www.sec.gov/Archives/edgar/data/92380/000009238026000068/xslF345X06/wk-form4_1778533476.xml">SEC 4 — LUV (2026-05-11) — BROOKS DOUGLAS H</a> — <code>sec_form4</code> (一次資料, 信頼度=0.90)</li>
+<li><a href="https://www.sec.gov/Archives/edgar/data/92380/000009238026000064/xslF345X06/wk-form4_1778533318.xml">SEC 4 — LUV (2026-05-11) — Feinberg Sarah</a> — <code>sec_form4</code> (一次資料, 信頼度=0.90)</li>
+<li><a href="https://www.sec.gov/Archives/edgar/data/92380/000009238026000032/xslF345X05/wk-form4_1773785921.xml">SEC 4 — LUV (2026-03-17) — Jordan Robert E</a> — <code>sec_form4</code> (一次資料, 信頼度=0.90)</li>
+<li><a href="https://www.sec.gov/Archives/edgar/data/92380/000009238026000028/xslF345X05/wk-form4_1773785633.xml">SEC 4 — LUV (2026-03-17) — Watterson Andrew M</a> — <code>sec_form4</code> (一次資料, 信頼度=0.90)</li>
+<li><a href="https://ktla.com/news/nationworld/southwest-airlines-humanoid-robot-ban/">Sorry, you can't bring your humanoid robots on Southwest flights anymore</a> — <code>hn_search</code> (SNS・フォーラム, 信頼度=0.65)</li>
+<li><a href="https://www.travelandtourworld.com/news/article/american-joins-delta-southwest-united-and-other-us-airlines-push-to-strip-away-travelers-rights-and-add-more-fees-by-rolling-back-key-protections-in-new-deregulation-move/">US airlines are pushing to remove protections for passengers and add more fees</a> — <code>hn_search</code> (SNS・フォーラム, 信頼度=0.65)</li>
+<li><a href="https://www.nytimes.com/2025/05/27/travel/southwest-airlines-baggage-fees.html">Southwest Airlines Sets Baggage Fees</a> — <code>hn_search</code> (SNS・フォーラム, 信頼度=0.65)</li>
+<li><a href="https://www.wsj.com/business/airlines/southwest-airlines-sets-fee-for-first-checked-bag-at-35-767d6832">Southwest Airlines Sets Fee for First Checked Bag at $35</a> — <code>hn_search</code> (SNS・フォーラム, 信頼度=0.65)</li>
+<li><a href="https://www.sec.gov/Archives/edgar/data/92380/000090266424004970/exhibit991.htm">SEC 13D Exhibit — exhibit991.htm</a> — <code>sec_13d_exhibits</code> (一次資料, 信頼度=0.90)</li>
+<li><a href="https://www.sec.gov/Archives/edgar/data/92380/000090266424004970/exhibit992.htm">SEC 13D Exhibit — exhibit992.htm</a> — <code>sec_13d_exhibits</code> (一次資料, 信頼度=0.90)</li>
+</ul>
+<p><em>本文中で直接引用されなかった参考情報が 41 件、調査中に収集されています (JSON 出力の <code>sources</code> フィールドに完全なリストがあります)。</em></p>
+<h2 id="_2">品質スコア内訳</h2>
+<p><strong>総合品質スコア: 81/100</strong> (高)</p>
+<table>
+<thead>
+<tr>
+<th>指標</th>
+<th>スコア</th>
+<th>重み</th>
+<th>説明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>open_challenges</td>
+<td>100/100</td>
+<td>0.15</td>
+<td>独立レビューが残した未決着論点 0 件 (少ないほど良い)。式: max(0, 100 - count*15)</td>
+</tr>
+<tr>
+<td>adversary_concern</td>
+<td>60/100</td>
+<td>0.2</td>
+<td>独立レビュー総合判定 = minor_concerns (clean=100 / minor=60 / major=20 / unknown=50)</td>
+</tr>
+<tr>
+<td>cited_url</td>
+<td>100/100</td>
+<td>0.15</td>
+<td>draft 中で literal 引用された URL の絶対数 21 件 (10 件以上で満点、収集 62 件のうち)</td>
+</tr>
+<tr>
+<td>staleness</td>
+<td>100/100</td>
+<td>0.1</td>
+<td>最新ソースからの経過 2 日 (新しいほど良い)。式: 30日以内=100、180日=0、線形</td>
+</tr>
+<tr>
+<td>diversity</td>
+<td>55/100</td>
+<td>0.25</td>
+<td>利用された collector の異種数 6/11 (多いほどクロスソース性が高い)</td>
+</tr>
+<tr>
+<td>correction_signal</td>
+<td>100/100</td>
+<td>0.1</td>
+<td>訂正報告書で検出された最大規模 = none (none/trivial=高評価、major=要警戒)</td>
+</tr>
+<tr>
+<td>translation_check</td>
+<td>100/100</td>
+<td>0.05</td>
+<td>翻訳未実行 (英語版のみ) → 100 (penalty なし)</td>
+</tr>
+</tbody>
+</table>
+<p><em>算出アルゴリズム: 重み付き合計 (各 0-100): open_challenges<em>0.15, adversary_concern</em>0.2, cited_url<em>0.15, staleness</em>0.1, diversity<em>0.25, correction_signal</em>0.1, translation_check*0.05. band: high (&gt;= 80) / medium (50-79) / low (&lt; 50).</em></p>
+<h2 id="_3">用語集</h2>
+<ul>
+<li><strong>10-K</strong>: 米国上場企業の年次報告書。日本の有価証券報告書に相当し、通期の経営成績、財務状態、事業リスク等を詳細に開示する</li>
+<li><strong>10-Q</strong>: 四半期報告書。通常 3 ヶ月ごと (Q1, Q2, Q3) に提出される</li>
+<li><strong>8-K</strong>: 重要事象が発生した際に随時提出される臨時報告書。経営陣の交代、訴訟、規制処分、買収等の重大なイベント開示に使用</li>
+<li><strong>Form 4</strong>: 役員・取締役・10% 以上保有株主が株式の売買を行った際に提出する開示書類。インサイダー取引の監視に用いられる</li>
+<li><strong>DEF 14A</strong>: 株主総会の議題および委任状勧誘書</li>
+</ul>
+<hr>
+<h2 id="_4">翻訳チェック結果</h2>
+<p><em>本セクションは翻訳の品質を<strong>自動チェック</strong>した結果です。<strong>修正はせず</strong>、気になる箇所を flag するだけの設計です (最終判断は人)。「機械チェック」は単純な集合差分で正規表現ベース — false positive (英語の <code>January 25, 2026</code> と日本語の <code>2026 年 1 月 25 日</code> の対応取りこぼし等) を含みます。「LLM レビュアー」は Haiku 4.5 が独立に英日を読み比べた所見で、こちらも完璧ではありません。</em></p>
+<h3 id="_5">機械チェック</h3>
+<p><em>見ている対象: URL / 年号 (4 桁) / 日付 (ISO ↔ 日本語形式変換後) / 通貨表現の集合差分。<strong>「英版のみ」</strong>は原文にあって日本語訳から消えた要素、<strong>「日版のみ」</strong>は逆 (訳文側に追加された)。</em></p>
+<p><strong>判定</strong>: <span class="check-badge check-minor">△ 13 件の不一致</span> — 下記を確認してください。ただし、英語の自然言語日付 (<code>January 25, 2026</code>) と日本語形式 (<code>2026 年 1 月 25 日</code>) の対応取りこぼし等は false positive (誤検出) です。</p>
+<ul>
+<li>URL (英版のみ — 訳文から消えた): <a href="https://www.sec.gov/Archives/edgar/data/92380/000009238026000035/xslF345X05/wk-form4_1774387504.xml">https://www.sec.gov/Archives/edgar/data/92380/000009238026000035/xslF345X05/wk-form4_1774387504.xml</a></li>
+<li>URL (日版のみ — 訳文に追加された): <a href="https://www.sec.gov/Archives/edgar/data/92380/000009238026000004/luv-20251231.htm、https://www.sec.gov/Archives/edgar/data/92380/000009238026000047/luv-20260331.htm、https://www.sec.gov/Archives/edgar/data/92380/000009238026000044/luv-20260422.htm,">https://www.sec.gov/Archives/edgar/data/92380/000009238026000004/luv-20251231.htm、https://www.sec.gov/Archives/edgar/data/92380/000009238026000047/luv-20260331.htm、https://www.sec.gov/Archives/edgar/data/92380/000009238026000044/luv-20260422.htm,</a> <a href="https://www.sec.gov/Archives/edgar/data/92380/000009238026000032/xslF345X05/wk-form4_1773785921.xml、https://www.sec.gov/Archives/edgar/data/92380/000009238026000028/xslF345X05/wk-form4_1773785633.xml、https://www.sec.gov/Archives/edgar/data/92380/000009238026000035/xslF345X05/wk-form4_1774387504.xml,">https://www.sec.gov/Archives/edgar/data/92380/000009238026000032/xslF345X05/wk-form4_1773785921.xml、https://www.sec.gov/Archives/edgar/data/92380/000009238026000028/xslF345X05/wk-form4_1773785633.xml、https://www.sec.gov/Archives/edgar/data/92380/000009238026000035/xslF345X05/wk-form4_1774387504.xml,</a> <a href="https://www.sec.gov/Archives/edgar/data/92380/000009238026000068/xslF345X06/wk-form4_1778533476.xml、https://www.sec.gov/Archives/edgar/data/92380/000009238026000064/xslF345X06/wk-form4_1778533318.xml,">https://www.sec.gov/Archives/edgar/data/92380/000009238026000068/xslF345X06/wk-form4_1778533476.xml、https://www.sec.gov/Archives/edgar/data/92380/000009238026000064/xslF345X06/wk-form4_1778533318.xml,</a> <a href="https://www.sec.gov/Archives/edgar/data/92380/000090266424005096/p24-2596sc13da.htm、https://www.sec.gov/Archives/edgar/data/92380/000090266424005259/p24-2662sc13da.htm、https://www.sec.gov/Archives/edgar/data/92380/000090266424005604/p24-2831sc13da.htm、https://www.sec.gov/Archives/edgar/data/92380/000090266424005829/p24-2934sc13da.htm、https://www.sec.gov/Archives/edgar/data/92380/000090266424005965/p24-3063sc13da.htm、https://www.sec.gov/Archives/edgar/data/92380/000090266424006082/p24-3113sc13da.htm,">https://www.sec.gov/Archives/edgar/data/92380/000090266424005096/p24-2596sc13da.htm、https://www.sec.gov/Archives/edgar/data/92380/000090266424005259/p24-2662sc13da.htm、https://www.sec.gov/Archives/edgar/data/92380/000090266424005604/p24-2831sc13da.htm、https://www.sec.gov/Archives/edgar/data/92380/000090266424005829/p24-2934sc13da.htm、https://www.sec.gov/Archives/edgar/data/92380/000090266424005965/p24-3063sc13da.htm、https://www.sec.gov/Archives/edgar/data/92380/000090266424006082/p24-3113sc13da.htm,</a> <a href="https://www.sec.gov/Archives/edgar/data/92380/000119312526127237/d121727ddef14a.htm、sec_form4,">https://www.sec.gov/Archives/edgar/data/92380/000119312526127237/d121727ddef14a.htm、sec_form4,</a> <a href="https://www.wsj.com/business/airlines/southwest-airlines-sets-fee-for-first-checked-bag-at-35-767d6832、https://www.nytimes.com/2025/05/27/travel/southwest-airlines-baggage-fees.html、https://www.travelandtourworld.com/news/article/american-joins-delta-southwest-united-and-other-us-airlines-push-to-strip-away-travelers-rights-and-add-more-fees-by-rolling-back-key-protections-in-new-deregulation-move/">https://www.wsj.com/business/airlines/southwest-airlines-sets-fee-for-first-checked-bag-at-35-767d6832、https://www.nytimes.com/2025/05/27/travel/southwest-airlines-baggage-fees.html、https://www.travelandtourworld.com/news/article/american-joins-delta-southwest-united-and-other-us-airlines-push-to-strip-away-travelers-rights-and-add-more-fees-by-rolling-back-key-protections-in-new-deregulation-move/</a></li>
+<li>日付 (日版のみ — 訳文に追加された): 2024-06-10, 2024-07-08, 2025-07-24, 2025-12-31, 2026-03-31, 2026-05-07</li>
+</ul>
+<h3 id="llm">LLM レビュアー所見</h3>
+<p><em>見ている対象: 数値・日付・固有名詞のずれ、重要情報の欠落、原文にない追加 (ハルシネーション)、意味の歪み、引用 URL の改変。自然な意訳や用語解説の付加は対象外。</em></p>
+<p><strong>判定</strong>: ✅ 問題なし — 個別の指摘なし、原文と訳文は実質一致。そのまま読んで構いません。</p>
+<p><em>レビュアーの説明: 数値、日付、固有名詞、URL すべてが原本と一致し、欠落も追加も検出されず。機械生成セクション (用語集、出典メタデータ、Quality 指標表の日本語訳) は指摘対象外。</em></p>
+<div style="margin: 16px 0; padding: 14px 18px; background: #fff7ed; border: 1px solid #fed7aa; border-radius: 6px; color: #7c2d12; font-size: 0.92rem; line-height: 1.7;"><strong>ご利用上の重要なお知らせ</strong>：本レポートは公開済の開示情報を機械的に整理・観察した分析サンプルです。金融商品取引法上の投資助言・代理業に該当する助言、個別銘柄の売買推奨、将来の価格予測のいずれも含みません。品質スコアは情報源の透明度・引用密度を機械的に集計したメタ指標であり、投資判断の根拠とすべきものではありません。投資判断はご自身でなさってください。</div>
+<p>(個別の指摘なし)</p>
+<div class="osint-footer">Generated by osint engine — Investigator + Adversary + Translator + Translation Reviewer</div>
+</main>
+</body>
+</html>
