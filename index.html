@@ -111,6 +111,70 @@
   <strong>ご利用上の重要なお知らせ</strong>：本ページに掲載するレポートは、公開済の開示情報を機械的に整理・観察した分析サンプルです。金融商品取引法上の投資助言・代理業に該当する助言、個別銘柄の売買推奨、将来の価格予測のいずれも含みません。投資判断はご自身でなさってください。
 </div>
 
+<h2>こんな方に向いています</h2>
+<ul class="bullets">
+  <li>公開済の SEC EDGAR や EDINET の開示書類を、自分で 1 つずつ手で読む時間がない</li>
+  <li>AI に企業情報を尋ねると、出典が示されず根拠を辿れないことが多いと感じている</li>
+  <li>日本企業と米企業を、1 つのレポートでまたいで見たい (各国の制度が違うのでこれが意外と難しい)</li>
+  <li>個別企業のディープダイブが必要だが、月数十万円帯の機関投資家向けツールは負担が重い</li>
+</ul>
+
+<h2>他のツールとの位置付け</h2>
+<p style="font-size: 0.92rem; color: var(--ink-mute); margin-bottom: 8px;">
+  以下は <strong>2026 年 5 月時点で編集部が把握している範囲</strong>での目安です。
+  各サービスの最新仕様は公式情報をご確認ください。
+</p>
+<div style="overflow-x: auto;">
+<table style="width: 100%; border-collapse: collapse; margin: 12px 0 24px; font-size: 0.92rem;">
+  <thead style="background: #f5f5f0;">
+    <tr>
+      <th style="padding: 10px 12px; text-align: left; border-bottom: 2px solid var(--rule); font-weight: 700;">観点</th>
+      <th style="padding: 10px 12px; text-align: left; border-bottom: 2px solid var(--rule); font-weight: 700;">Bloomberg<br><span style="font-weight: 400; color: var(--ink-mute); font-size: 0.85rem;">(Terminal 想定)</span></th>
+      <th style="padding: 10px 12px; text-align: left; border-bottom: 2px solid var(--rule); font-weight: 700;">ChatGPT 等の<br>汎用 AI</th>
+      <th style="padding: 10px 12px; text-align: left; border-bottom: 2px solid var(--rule); font-weight: 700;">株探 等の<br>国内サイト</th>
+      <th style="padding: 10px 12px; text-align: left; border-bottom: 2px solid var(--rule); font-weight: 700; background: #eff6ff;">osint<br><span style="font-weight: 400; font-size: 0.85rem;">(本サービス)</span></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="padding: 10px 12px; border-bottom: 1px solid var(--rule); font-weight: 600;">価格帯 (目安)</td>
+      <td style="padding: 10px 12px; border-bottom: 1px solid var(--rule);">月数十万円帯</td>
+      <td style="padding: 10px 12px; border-bottom: 1px solid var(--rule);">無料〜月数千円帯</td>
+      <td style="padding: 10px 12px; border-bottom: 1px solid var(--rule);">基本無料 (一部有料)</td>
+      <td style="padding: 10px 12px; border-bottom: 1px solid var(--rule); background: #eff6ff;">クローズドβ期間中</td>
+    </tr>
+    <tr>
+      <td style="padding: 10px 12px; border-bottom: 1px solid var(--rule); font-weight: 600;">個別企業のディープダイブ</td>
+      <td style="padding: 10px 12px; border-bottom: 1px solid var(--rule);">可</td>
+      <td style="padding: 10px 12px; border-bottom: 1px solid var(--rule);">概観レベル</td>
+      <td style="padding: 10px 12px; border-bottom: 1px solid var(--rule);">日本企業中心</td>
+      <td style="padding: 10px 12px; border-bottom: 1px solid var(--rule); background: #eff6ff;">日米両方を 1 本に統合</td>
+    </tr>
+    <tr>
+      <td style="padding: 10px 12px; border-bottom: 1px solid var(--rule); font-weight: 600;">出典 URL の明示</td>
+      <td style="padding: 10px 12px; border-bottom: 1px solid var(--rule);">専門メディア・データに付与</td>
+      <td style="padding: 10px 12px; border-bottom: 1px solid var(--rule);">原則なし (推測込みの応答)</td>
+      <td style="padding: 10px 12px; border-bottom: 1px solid var(--rule);">記事による</td>
+      <td style="padding: 10px 12px; border-bottom: 1px solid var(--rule); background: #eff6ff;">全主張に 1 件以上付与</td>
+    </tr>
+    <tr>
+      <td style="padding: 10px 12px; border-bottom: 1px solid var(--rule); font-weight: 600;">多ソース横断</td>
+      <td style="padding: 10px 12px; border-bottom: 1px solid var(--rule);">専属取材 + データベース中心</td>
+      <td style="padding: 10px 12px; border-bottom: 1px solid var(--rule);">学習データに依存</td>
+      <td style="padding: 10px 12px; border-bottom: 1px solid var(--rule);">国内媒体中心</td>
+      <td style="padding: 10px 12px; border-bottom: 1px solid var(--rule); background: #eff6ff;">SEC・EDINET・各国 RSS を横断</td>
+    </tr>
+    <tr>
+      <td style="padding: 10px 12px; font-weight: 600;">レポートの透明度</td>
+      <td style="padding: 10px 12px;">ブラックボックス部分あり</td>
+      <td style="padding: 10px 12px;">プロンプトと回答のみ</td>
+      <td style="padding: 10px 12px;">編集部の判断含む</td>
+      <td style="padding: 10px 12px; background: #eff6ff;">独立レビュー + 品質スコアを併記</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
 <h2>サンプルレポート (4 本)</h2>
 <ul class="sample-list">
 
@@ -171,7 +235,7 @@
 <ul class="bullets">
   <li>各記述に<strong>出典 URL を 1 件以上付与</strong>。出典のない主張は記載しません。</li>
   <li>独立レビュー (別コンテキストで動く LLM) が weakness を flag し、未決着論点として残します。</li>
-  <li>8 指標の<strong>品質スコア (0〜100、緑/黄/赤)</strong>をレポート冒頭に表示。算出アルゴリズムも末尾で全開示。なおこのスコアは情報源の透明度・引用密度を機械的に集計したメタ指標であり、投資判断の根拠とすべきものではありません。</li>
+  <li>7 つの指標による<strong>品質スコア (0〜100、緑/黄/赤)</strong>をレポート冒頭に表示。算出方法も末尾で全開示。なおこのスコアは情報源の透明度・引用の密度などを機械的に集計した目安であり、投資判断の根拠とすべきものではありません。</li>
   <li>日本企業は EDINET 一次資料 + 英語報道 + ADR ティッカー経由の SEC 開示の<strong>三経路クロス</strong>で調査します。</li>
 </ul>
 
@@ -189,9 +253,18 @@
 <div class="cta">
   <h2>βテスト参加にご関心のある方へ</h2>
   <p>
-    現段階ではクローズドβとして運用しており、ご関心のある方は
-    SNS の固定ポストよりお問い合わせください。サンプルレポートに対するご意見・
-    ご要望もあわせて伺っております。
+    現段階ではクローズドβとして運用しています。ご関心のある方は、
+    以下の申込みフォームから連絡先をお知らせください。サンプルレポートに対する
+    ご意見・ご要望もあわせて伺っております。
+  </p>
+  <p style="margin-top: 16px;">
+    <a href="WAITLIST_FORM_URL" style="display: inline-block; padding: 12px 28px; background: var(--accent); color: white; border-radius: 6px; text-decoration: none; font-weight: 600;">
+      クローズドβに申し込む →
+    </a>
+  </p>
+  <p style="font-size: 0.85rem; color: var(--ink-mute); margin-top: 12px;">
+    お知らせ: 申込み後、編集部より個別にご連絡を差し上げます。
+    SNS (固定ポスト) からのお問い合わせも引き続き受け付けています。
   </p>
 </div>
 
